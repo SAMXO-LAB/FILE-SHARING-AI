@@ -1,6 +1,9 @@
 import { errors, must, route } from "@/lib/api";
 import { loadPolicy } from "@/lib/ai/policy";
+import { withAiDeadline } from "@/lib/ai/provider";
 import { askAboutItems } from "@/lib/retrieval/answer";
+
+export const maxDuration = 60;
 import { idParams } from "@/lib/validation";
 
 const MAX_ITEMS = 4;
@@ -18,7 +21,7 @@ export const POST = route<undefined, undefined, { id: string }>({ rateLimit: { n
     { type: "conversation" as const, id: i.conversation_id as string });
   if (refs.length === 0) throw errors.badRequest("This collection is empty.");
   const policy = await loadPolicy(supabase, user.id);
-  const result = await askAboutItems(supabase, { question: `Summarize these items from the collection “${collection.name}”`, policy, items: refs });
+  const result = await withAiDeadline(45_000, () => askAboutItems(supabase, { question: `Summarize these items from the collection “${collection.name}”`, policy, items: refs }));
   if (refs.length > MAX_ITEMS) {
     result.limitations.push(`This collection has ${refs.length} items; the summary covers the ${MAX_ITEMS} most recently added. Ask a specific question to dig into the rest.`);
   }

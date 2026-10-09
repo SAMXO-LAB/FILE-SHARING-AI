@@ -36,6 +36,8 @@ export interface ChatMessage {
   error?: string;
   /** For user messages: lets the "without this filter" chips re-run the question. */
   question?: string;
+  /** For error items: the question bubble that failed, removed again on retry. */
+  failedUserId?: string;
 }
 
 const MODE_LABEL: Record<string, { label: string; tone: "accent" | "neutral" | "warn" }> = {

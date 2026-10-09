@@ -24,6 +24,14 @@ interface AskResponse {
 }
 interface ConvResponse { conversation: { id: string; title: string }; messages: { id: string; role: "user" | "assistant"; content: string; structured: Structured; attachments: { id: string; name: string }[]; cards: ContentCard[]; removedCards: number }[] }
 
+/** Turns transport errors into something a person can act on. */
+function friendlyError(e: unknown): string {
+  const msg = errorMessage(e);
+  if (/\b(504|502|503)\b/.test(msg)) return "The answer took too long and the server stopped waiting. Please try again in a moment.";
+  if (/Failed to fetch|NetworkError/i.test(msg)) return "You seem to be offline. Check your connection and try again.";
+  return msg;
+}
+
 const STARTERS = ["What did I add recently?", "Find my PDFs", "Show links I saved recently", "Find duplicate files"];
 
 export function AskView() {
@@ -99,7 +107,7 @@ export function AskView() {
       }
       void history.reload();
     } catch (e) {
-      setMessages((m) => [...m, { id: `err-${tempId}`, role: "assistant", content: "", error: errorMessage(e), question }]);
+      setMessages((m) => [...m, { id: `err-${tempId}`, role: "assistant", content: "", error: friendlyError(e), question, failedUserId: tempId }]);
     } finally {
       setBusy(false);
       taRef.current?.focus();
@@ -229,7 +237,7 @@ export function AskView() {
             {m.attachments && m.attachments.length > 0 && <div className="flex flex-wrap justify-end gap-1.5">{m.attachments.map((a) => <Badge key={a.id}><Paperclip className="h-3 w-3" aria-hidden />{a.name}</Badge>)}</div>}
           </div>
         ) : m.error ? (
-          <div key={m.id} role="alert" className="card flex flex-wrap items-center gap-3 border-danger/25 bg-danger/5 p-4 text-sm"><span className="flex-1 text-danger">{m.error}</span>{m.question && <Button size="sm" variant="glass" onClick={() => { setMessages((x) => x.filter((y) => y.id !== m.id)); void send(m.question!); }}>Try again</Button>}</div>
+          <div key={m.id} role="alert" className="card flex flex-wrap items-center gap-3 border-danger/25 bg-danger/5 p-4 text-sm"><span className="flex-1 text-danger">{m.error}</span>{m.question && <Button size="sm" variant="glass" onClick={() => { setMessages((x) => x.filter((y) => y.id !== m.id && y.id !== m.failedUserId)); void send(m.question!); }}>Try again</Button>}</div>
         ) : (
           <AssistantBlock key={m.id} m={m} onAsk={(t) => void send(t)} onRefine={(kind) => void send(lastUserQuestion(i), { dropped: [kind] })} onRetry={() => void send(lastUserQuestion(i))} />
         ))}

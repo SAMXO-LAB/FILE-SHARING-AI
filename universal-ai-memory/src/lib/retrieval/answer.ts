@@ -117,7 +117,8 @@ async function interpret(input: AskInput, prev: PreviousTurn | null): Promise<In
         },
       ],
       aiInterpretationSchema,
-      { maxTokens: 300, temperature: 0 },
+      // Understanding the question is a nice-to-have: keep it short so the answer has time.
+      { maxTokens: 300, temperature: 0, timeoutMs: 8_000 },
     );
     return mergeAiInterpretation(base, ai);
   } catch {

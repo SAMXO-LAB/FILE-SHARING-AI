@@ -3,6 +3,7 @@ import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { adminConfigured } from "@/lib/env";
 import { errors } from "@/lib/api";
+import { withAiDeadline } from "@/lib/ai/provider";
 import { processPendingJobs } from "@/lib/processing/handlers";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -23,7 +24,8 @@ export function kickJobs(budgetMs = 25_000) {
   if (!adminConfigured()) return;
   after(async () => {
     try {
-      await processPendingJobs(createAdminClient(), { workerId: `inline-${crypto.randomUUID().slice(0, 6)}`, budgetMs, limit: 3 });
+      // AI calls inside jobs share the same budget so the background run finishes before the platform limit.
+      await withAiDeadline(budgetMs + 10_000, () => processPendingJobs(createAdminClient(), { workerId: `inline-${crypto.randomUUID().slice(0, 6)}`, budgetMs, limit: 3 }));
     } catch (e) {
       console.error("[jobs] inline run failed:", (e as Error).message.slice(0, 200));
     }

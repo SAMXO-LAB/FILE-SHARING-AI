@@ -1,4 +1,5 @@
 import "server-only";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { z, type ZodType } from "zod";
 import { aiConfig, aiConfigs, type AiConfig } from "@/lib/env";
 
@@ -31,10 +32,25 @@ export interface ChatOptions {
   maxTokens?: number;
   json?: boolean;
   signal?: AbortSignal;
+  /** Longest wait for one provider before moving on to the next (default 25s). */
+  timeoutMs?: number;
 }
 
-async function postJson(url: string, headers: Record<string, string>, body: unknown, signal?: AbortSignal) {
-  const timeout = AbortSignal.timeout(90_000);
+/**
+ * Request-wide time budget for AI calls. Serverless functions are killed at their time limit (which
+ * shows up as a 504), so a request that uses AI runs inside withAiDeadline(): every provider attempt
+ * is capped to the time that is left, and when the budget is spent the caller gets an AiProviderError
+ * and falls back to showing matching passages instead of timing out.
+ */
+const deadlineStore = new AsyncLocalStorage<number>();
+export function withAiDeadline<T>(ms: number, fn: () => Promise<T>): Promise<T> {
+  return deadlineStore.run(Date.now() + ms, fn);
+}
+const DEFAULT_ATTEMPT_MS = 25_000;
+const MIN_ATTEMPT_MS = 2_500;
+
+async function postJson(url: string, headers: Record<string, string>, body: unknown, signal?: AbortSignal, timeoutMs = DEFAULT_ATTEMPT_MS) {
+  const timeout = AbortSignal.timeout(timeoutMs);
   const res = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json", ...headers },
@@ -76,14 +92,14 @@ async function chatOpenAi(cfg: AiConfig, messages: ChatMessage[], o: ChatOptions
   const body = { model: cfg.chatModel, messages: openAiMessages(messages), temperature: o.temperature ?? 0.2, max_tokens: o.maxTokens ?? 1500 };
   let data: { choices?: { message?: { content?: string } }[] };
   try {
-    data = (await postJson(`${cfg.baseUrl}/chat/completions`, headers, { ...body, ...(o.json ? { response_format: { type: "json_object" } } : {}) }, o.signal)) as typeof data;
+    data = (await postJson(`${cfg.baseUrl}/chat/completions`, headers, { ...body, ...(o.json ? { response_format: { type: "json_object" } } : {}) }, o.signal, o.timeoutMs)) as typeof data;
   } catch (e) {
     // Some OpenAI-compatible providers reject JSON mode. The prompts already ask for JSON and the
     // output is parsed tolerantly, so retry once without it.
     if (!(o.json && e instanceof AiProviderError && (e.status === 400 || e.status === 422))) throw e;
     const json = [...messages];
     json.unshift({ role: "system", content: "Respond with a single JSON object and nothing else." });
-    data = (await postJson(`${cfg.baseUrl}/chat/completions`, headers, { ...body, messages: openAiMessages(json) }, o.signal)) as typeof data;
+    data = (await postJson(`${cfg.baseUrl}/chat/completions`, headers, { ...body, messages: openAiMessages(json) }, o.signal, o.timeoutMs)) as typeof data;
   }
   const text = data.choices?.[0]?.message?.content;
   if (typeof text !== "string") throw new AiProviderError("The AI provider returned an empty response.");
@@ -115,6 +131,7 @@ async function chatAnthropic(cfg: AiConfig, messages: ChatMessage[], o: ChatOpti
       max_tokens: o.maxTokens ?? 1500,
     },
     o.signal,
+    o.timeoutMs,
   )) as { content?: { type: string; text?: string }[] };
   const text = data.content?.filter((c) => c.type === "text").map((c) => c.text ?? "").join("");
   if (!text) throw new AiProviderError("The AI provider returned an empty response.");
@@ -151,10 +168,16 @@ export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Pro
   const chain = ready.length ? ready : all;
   const failures: string[] = [];
   let last: unknown;
+  const deadline = deadlineStore.getStore();
   for (const cfg of chain) {
     if (opts.signal?.aborted) throw opts.signal.reason ?? new Error("aborted");
+    const left = deadline ? deadline - Date.now() : Infinity;
+    if (left < MIN_ATTEMPT_MS) {
+      throw new AiProviderError(failures.length ? `The AI providers were too slow or unavailable (${failures.join(", ")}).` : "There wasn't enough time left to ask an AI provider.");
+    }
+    const attempt = { ...opts, timeoutMs: Math.min(opts.timeoutMs ?? DEFAULT_ATTEMPT_MS, left - 500) };
     try {
-      const text = cfg.provider === "anthropic" ? await chatAnthropic(cfg, messages, opts) : await chatOpenAi(cfg, messages, opts);
+      const text = cfg.provider === "anthropic" ? await chatAnthropic(cfg, messages, attempt) : await chatOpenAi(cfg, messages, attempt);
       cooldown.delete(keyOf(cfg));
       return text;
     } catch (e) {

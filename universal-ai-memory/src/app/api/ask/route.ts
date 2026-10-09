@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { errors, route } from "@/lib/api";
 import { loadPolicy } from "@/lib/ai/policy";
+import { withAiDeadline } from "@/lib/ai/provider";
 import { ask } from "@/lib/retrieval/answer";
 import { previousTurnFrom } from "@/lib/retrieval/evidence";
 import { audit } from "@/lib/server/context";
@@ -48,14 +49,23 @@ export const POST = route({ body, rateLimit: { name: "ask", max: 40, windowSecon
     .from("ai_messages").insert({ conversation_id: conversationId, owner_id: user.id, role: "user", content: body.question, attachments }).select("id,created_at").single();
   if (umErr) throw umErr;
 
-  const result = await ask(supabase, {
-    question: body.question,
-    policy,
-    previous,
-    attachmentFileIds: attachments.map((a) => a.id),
-    filters: body.filters,
-    tzOffsetMinutes: body.tzOffsetMinutes,
-  });
+  // AI work gets a 45s budget inside the 60s function limit, so slow providers turn into a
+  // "matching passages" answer instead of a timeout. If answering fails anyway, the question is
+  // removed again so the chat doesn't fill up with unanswered copies.
+  let result: Awaited<ReturnType<typeof ask>>;
+  try {
+    result = await withAiDeadline(45_000, () => ask(supabase, {
+      question: body.question,
+      policy,
+      previous,
+      attachmentFileIds: attachments.map((a) => a.id),
+      filters: body.filters,
+      tzOffsetMinutes: body.tzOffsetMinutes,
+    }));
+  } catch (e) {
+    await supabase.from("ai_messages").delete().eq("id", userMsg.id).eq("owner_id", user.id);
+    throw e;
+  }
 
   // History keeps identifiers and the passages that were cited; cards are re-resolved (and re-authorised) on every view.
   const structured = {

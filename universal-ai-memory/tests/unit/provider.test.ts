@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { _resetProviderCooldowns, chat } from "@/lib/ai/provider";
+import { _resetProviderCooldowns, AiProviderError, chat, withAiDeadline } from "@/lib/ai/provider";
 import { aiConfigs } from "@/lib/env";
 import { embedTexts } from "@/lib/ai/embeddings";
 
@@ -79,4 +79,20 @@ describe("automatic fallback between providers", () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => { if (String(url).includes("googleapis")) throw new TypeError("fetch failed"); return reply("ok"); }));
     await expect(chat([{ role: "user", content: "q" }])).resolves.toBe("ok");
   });
+});
+
+describe("request time budget", () => {
+  it("stops waiting on slow providers before the deadline instead of letting the request time out", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "g"); vi.stubEnv("GROQ_API_KEY", "q");
+    // A provider that never answers until it is aborted.
+    vi.stubGlobal("fetch", vi.fn((_url: string, init: RequestInit) => new Promise((_, reject) => {
+      init.signal!.addEventListener("abort", () => reject(Object.assign(new Error("timed out"), { name: "TimeoutError" })));
+    })));
+    const started = Date.now();
+    const err = await withAiDeadline(4_000, () => chat([{ role: "user", content: "q" }])).catch((e) => e);
+    const took = Date.now() - started;
+    expect(err).toBeInstanceOf(AiProviderError);
+    expect(String(err.message)).toMatch(/too slow|enough time/);
+    expect(took).toBeLessThan(4_500);
+  }, 10_000);
 });
