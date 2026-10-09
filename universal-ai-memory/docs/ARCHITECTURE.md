@@ -79,6 +79,9 @@ Nothing here is end-to-end encrypted, and the product never claims it is.
 
 ## Theming
 
+The default look is the blue-and-white **Universal** theme (stored id `liquid-glass`), light by default with a navy dark variant. Tokens live in `src/app/globals.css` (colours, shadows, radii, focus ring, motion) and per-theme values in `src/lib/themes.ts`. Content cards are solid; blur is reserved for floating layers (`.glass-float`: menus, toasts, the upload tray, the selection toolbar). Migration `0010_default_appearance.sql` moves accounts still on the old defaults to the new ones.
+
+
 `<html>` carries `data-theme`, `data-mode`, `data-color-mode`, `data-bg`, `data-sidebar-style`, `data-bubble`, `data-anim`, `data-contrast`, plus CSS variables for accent and radius. An inline, nonce'd script resolves "system" mode before first paint (no flash), and `applyThemeToDom` gives live preview in Settings.
 
 ## Deliberately not included
