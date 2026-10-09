@@ -53,3 +53,17 @@ See `docs/INTEGRATIONS.md`. Set the three `TELEGRAM_*` variables, deploy, then r
 ## 6. Upgrading
 
 Migrations are append-only files in `supabase/migrations`. Apply new ones with `supabase db push` before deploying the matching app version.
+
+## 7. Sign in with Google (optional)
+
+The login and sign-up pages show **Continue with Google** automatically once Google is enabled in Supabase (the app reads Supabase's public auth settings, so no app variable is needed).
+
+1. **Google Cloud Console** → APIs & Services → **OAuth consent screen**: choose *External*, fill in the app name and your email. While the app is in *Testing*, add the Google accounts that may sign in under *Test users*.
+2. **Credentials → Create credentials → OAuth client ID** → *Web application*.
+   - Authorized JavaScript origins: your site, e.g. `https://your-app.vercel.app`
+   - Authorized redirect URIs: `https://<project-ref>.supabase.co/auth/v1/callback` (shown on the Google provider page in Supabase)
+3. **Supabase → Authentication → Sign In / Providers → Google**: turn it on, paste the Client ID and Client Secret, save.
+4. **Supabase → Authentication → URL Configuration**: the Site URL is your site, and Redirect URLs include `https://your-app.vercel.app/auth/callback` (add `https://*-<your-vercel-team>.vercel.app/auth/callback` to make preview deployments work too).
+5. Apply migration `0009_oauth_profiles.sql`. New Google accounts then get a username from their email (e.g. `jane_doe`) and their Google name as display name; they can change the username once in Settings → Account.
+
+Google sign-in doesn't send any email from Supabase, so it isn't affected by the built-in email rate limit.
