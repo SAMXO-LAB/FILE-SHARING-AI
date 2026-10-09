@@ -29,6 +29,7 @@ const server = http.createServer((req, res) => {
     const p = url.pathname;
     if (p === "/auth/v1/token") return send(200, session());
     if (p === "/auth/v1/user") return send(200, user);
+    if (p === "/auth/v1/settings") return send(200, { external: { email: true, google: true } });
     if (p === "/auth/v1/logout") return send(204);
     if (p.startsWith("/auth/v1/.well-known/jwks")) return send(200, { keys: [] });
     if (p.startsWith("/auth/v1/")) return send(200, {});

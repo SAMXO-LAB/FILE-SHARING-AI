@@ -46,6 +46,13 @@ try {
     if (!(await page.locator("h1, h2").first().isVisible())) problems.push(`[${p}] no heading`);
   }
 
+  where = "google button";
+  for (const p of ["/login", "/signup"]) {
+    await page.goto(`http://127.0.0.1:${APP}${p}`, { waitUntil: "networkidle" });
+    if (!(await page.getByRole("button", { name: /with google/i }).isVisible())) problems.push(`[${p}] Google button missing`);
+    await page.screenshot({ path: `.e2e/public${p.replace(/\//g, "_")}.png` });
+  }
+
   where = "sign-in";
   await page.goto(`http://127.0.0.1:${APP}/login`, { waitUntil: "networkidle" });
   await page.getByLabel(/email/i).fill("smoke@example.test");
