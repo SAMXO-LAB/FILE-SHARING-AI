@@ -1,0 +1,123 @@
+"use client";
+import * as React from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import * as DropdownPrimitive from "@radix-ui/react-dropdown-menu";
+import * as TabsPrimitive from "@radix-ui/react-tabs";
+import * as SwitchPrimitive from "@radix-ui/react-switch";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { Check, ChevronDown, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+/* Dialog -------------------------------------------------------------------------------- */
+export const Dialog = DialogPrimitive.Root;
+export const DialogTrigger = DialogPrimitive.Trigger;
+export const DialogClose = DialogPrimitive.Close;
+
+export function DialogContent({ className, children, title, description, hideClose, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { title: string; description?: string; hideClose?: boolean }) {
+  return (
+    <DialogPrimitive.Portal>
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/55 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in" />
+      <DialogPrimitive.Content
+        className={cn("glass glass-strong fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto p-6 focus:outline-none", className)}
+        {...props}
+      >
+        <div className="pr-8">
+          <DialogPrimitive.Title className="text-lg font-semibold">{title}</DialogPrimitive.Title>
+          {description ? <DialogPrimitive.Description className="mt-1 text-sm text-muted">{description}</DialogPrimitive.Description> : <DialogPrimitive.Description className="sr-only">{title}</DialogPrimitive.Description>}
+        </div>
+        {children}
+        {!hideClose && (
+          <DialogPrimitive.Close className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-glass hover:text-fg" aria-label="Close">
+            <X className="h-4 w-4" />
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Portal>
+  );
+}
+
+/* Dropdown ------------------------------------------------------------------------------ */
+export const DropdownMenu = DropdownPrimitive.Root;
+export const DropdownMenuTrigger = DropdownPrimitive.Trigger;
+export function DropdownMenuContent({ className, sideOffset = 6, ...props }: React.ComponentPropsWithoutRef<typeof DropdownPrimitive.Content>) {
+  return (
+    <DropdownPrimitive.Portal>
+      <DropdownPrimitive.Content sideOffset={sideOffset} className={cn("glass glass-strong z-50 min-w-48 overflow-hidden p-1.5", className)} {...props} />
+    </DropdownPrimitive.Portal>
+  );
+}
+export function DropdownMenuItem({ className, danger, ...props }: React.ComponentPropsWithoutRef<typeof DropdownPrimitive.Item> & { danger?: boolean }) {
+  return (
+    <DropdownPrimitive.Item
+      className={cn("flex cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-[rgb(var(--line)/0.12)]", danger && "text-danger", className)}
+      {...props}
+    />
+  );
+}
+export const DropdownMenuSeparator = ({ className }: { className?: string }) => <DropdownPrimitive.Separator className={cn("my-1 h-px bg-[rgb(var(--line)/0.12)]", className)} />;
+export const DropdownMenuLabel = ({ children }: { children: React.ReactNode }) => <DropdownPrimitive.Label className="px-2.5 py-1.5 text-xs text-muted">{children}</DropdownPrimitive.Label>;
+
+/* Tabs ---------------------------------------------------------------------------------- */
+/** `min-w-0 max-w-full` lets a long tab row scroll inside its own box instead of widening the page on phones. */
+export function Tabs({ className, ...props }: React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>) {
+  return <TabsPrimitive.Root className={cn("min-w-0 max-w-full", className)} {...props} />;
+}
+export function TabsList({ className, ...props }: React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
+  return <TabsPrimitive.List className={cn("glass inline-flex max-w-full gap-1 overflow-x-auto p-1", className)} {...props} />;
+}
+export function TabsTrigger({ className, ...props }: React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>) {
+  return (
+    <TabsPrimitive.Trigger
+      className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[calc(var(--radius)*0.55)] px-3 text-sm text-muted transition-colors hover:text-fg data-[state=active]:bg-accent data-[state=active]:text-accent-fg", className)}
+      {...props}
+    />
+  );
+}
+export const TabsContent = ({ className, ...props }: React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>) => <TabsPrimitive.Content className={cn("mt-5 focus:outline-none", className)} {...props} />;
+
+/* Switch -------------------------------------------------------------------------------- */
+export function Switch({ className, ...props }: React.ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>) {
+  return (
+    <SwitchPrimitive.Root className={cn("relative h-6 w-11 shrink-0 rounded-full border hairline bg-[rgb(var(--line)/0.18)] transition-colors data-[state=checked]:border-accent data-[state=checked]:bg-accent disabled:opacity-50", className)} {...props}>
+      <SwitchPrimitive.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+    </SwitchPrimitive.Root>
+  );
+}
+
+/* Select -------------------------------------------------------------------------------- */
+export function Select({ value, onValueChange, options, placeholder, className, id, "aria-label": ariaLabel }: { value: string; onValueChange: (v: string) => void; options: { value: string; label: string }[]; placeholder?: string; className?: string; id?: string; "aria-label"?: string }) {
+  return (
+    <SelectPrimitive.Root value={value} onValueChange={onValueChange}>
+      <SelectPrimitive.Trigger id={id} aria-label={ariaLabel} className={cn("inline-flex h-10 w-full items-center justify-between gap-2 rounded-[calc(var(--radius)*0.6)] border hairline bg-[rgb(var(--surface)/calc(var(--surface-a)*0.8))] px-3.5 text-sm focus:border-accent focus:outline-none", className)}>
+        <SelectPrimitive.Value placeholder={placeholder} />
+        <SelectPrimitive.Icon><ChevronDown className="h-4 w-4 text-muted" /></SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Content position="popper" sideOffset={6} className="glass glass-strong z-[60] max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden p-1.5">
+          <SelectPrimitive.Viewport>
+            {options.map((o) => (
+              <SelectPrimitive.Item key={o.value} value={o.value} className="relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-3 text-sm outline-none data-[highlighted]:bg-[rgb(var(--line)/0.12)]">
+                <SelectPrimitive.ItemIndicator className="absolute left-2"><Check className="h-4 w-4" /></SelectPrimitive.ItemIndicator>
+                <SelectPrimitive.ItemText>{o.label}</SelectPrimitive.ItemText>
+              </SelectPrimitive.Item>
+            ))}
+          </SelectPrimitive.Viewport>
+        </SelectPrimitive.Content>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
+  );
+}
+
+/* Tooltip ------------------------------------------------------------------------------- */
+export const TooltipProvider = TooltipPrimitive.Provider;
+export function Tooltip({ label, children, side = "right" }: { label: string; children: React.ReactNode; side?: "top" | "right" | "bottom" | "left" }) {
+  return (
+    <TooltipPrimitive.Root delayDuration={250}>
+      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Portal>
+        <TooltipPrimitive.Content side={side} sideOffset={8} className="glass glass-strong z-[70] px-2.5 py-1.5 text-xs">{label}</TooltipPrimitive.Content>
+      </TooltipPrimitive.Portal>
+    </TooltipPrimitive.Root>
+  );
+}
