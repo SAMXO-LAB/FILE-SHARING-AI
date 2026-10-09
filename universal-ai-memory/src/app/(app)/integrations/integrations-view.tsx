@@ -114,13 +114,13 @@ export function IntegrationsView() {
       {data.error ? <ErrorState message={data.error} onRetry={data.reload} /> : (
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="glass flex flex-col gap-3 p-5" aria-labelledby="wa-h">
-            <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><MessageCircle className="h-5 w-5" aria-hidden /></span><h2 id="wa-h" className="flex-1 font-semibold">WhatsApp</h2><Badge>Import only</Badge></div>
+            <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 dark:bg-emerald-500/12 text-emerald-600 dark:text-emerald-300"><MessageCircle className="h-5 w-5" aria-hidden /></span><h2 id="wa-h" className="flex-1 font-semibold">WhatsApp</h2><Badge>Import only</Badge></div>
             <p className="text-sm text-muted">Export a chat from WhatsApp and upload it here to search and ask about it. WhatsApp doesn't offer a way for apps like this to read your chats automatically, so there is no live sync, and nothing is read from your phone.</p>
             <div className="mt-auto"><Button onClick={() => setWizard("whatsapp_export")}><FileUp className="h-4 w-4" aria-hidden />Import a WhatsApp export</Button></div>
           </section>
 
           <section className="glass flex flex-col gap-3 p-5" aria-labelledby="tg-h">
-            <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-500/15 text-sky-400"><Send className="h-5 w-5" aria-hidden /></span><h2 id="tg-h" className="flex-1 font-semibold">Telegram</h2><Badge tone={av?.telegramBot.configured ? "ok" : "neutral"}>{av?.telegramBot.configured ? "Bot available" : "Bot not set up"}</Badge></div>
+            <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-50 dark:bg-sky-500/12 text-sky-600 dark:text-sky-300"><Send className="h-5 w-5" aria-hidden /></span><h2 id="tg-h" className="flex-1 font-semibold">Telegram</h2><Badge tone={av?.telegramBot.configured ? "ok" : "neutral"}>{av?.telegramBot.configured ? "Bot available" : "Bot not set up"}</Badge></div>
             <p className="text-sm text-muted">Import a Telegram Desktop export (JSON), or link the bot and send it messages, files and links to save. The bot only sees what you send to it; it can't read your other chats.</p>
             <div className="mt-auto flex flex-wrap gap-2">
               <Button variant="glass" onClick={() => setWizard("telegram_export")}><FileUp className="h-4 w-4" aria-hidden />Import an export</Button>

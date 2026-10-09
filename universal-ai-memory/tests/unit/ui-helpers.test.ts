@@ -46,7 +46,15 @@ describe("themes", () => {
     expect(t.attrs["data-theme"]).toBe("aurora");
     expect(t.attrs["data-contrast"]).toBe("high");
     expect(t.style["--radius"]).toBe("8px");
-    expect(t.style["--accent"]).toBe("#7c8cff");
+    expect(t.style["--accent"]).toBe("#2563eb");
+  });
+  it("treats the old purple default accent as the new blue default, but keeps a chosen accent", () => {
+    expect(themeFromPrefs(prefs).style["--accent"]).toBe("#2563eb");
+    expect(themeFromPrefs({ ...prefs, accent_color: "#16a34a" }).style["--accent"]).toBe("#16a34a");
+  });
+  it("renders the default theme light unless dark is chosen", () => {
+    expect(themeFromPrefs(prefs).attrs["data-mode"]).toBe("light");
+    expect(themeFromPrefs({ ...prefs, color_mode: "dark" }).attrs["data-mode"]).toBe("dark");
   });
   it("falls back to the default theme for an unknown theme id", () => {
     expect(themeFromPrefs({ ...prefs, theme: "nope" as never }).attrs["data-theme"]).toBe("liquid-glass");

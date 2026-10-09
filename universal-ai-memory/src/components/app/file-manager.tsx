@@ -192,17 +192,17 @@ export function FileManager({ title, description, categories, grid: gridDefault 
             {catOptions.length > 0 && <div className="w-36"><Select aria-label="File type" value={category} onValueChange={setCategory} options={catOptions} /></div>}
             <div className="w-36"><Select aria-label="Sort by" value={sort} onValueChange={setSort} options={[{ value: "date", label: "Date added" }, { value: "name", label: "Name" }, { value: "size", label: "Size" }, { value: "type", label: "Type" }]} /></div>
             <Button variant="glass" size="icon" aria-label={dir === "asc" ? "Sorted ascending" : "Sorted descending"} onClick={() => setDir((d) => (d === "asc" ? "desc" : "asc"))}><ArrowDownAZ className={cn("h-4 w-4 transition-transform", dir === "desc" && "rotate-180")} /></Button>
-            <div className="glass flex p-1">
-              <Button variant={layout === "list" ? "primary" : "ghost"} size="icon-sm" aria-label="List view" aria-pressed={layout === "list"} onClick={() => setLayout("list")}><List className="h-4 w-4" /></Button>
-              <Button variant={layout === "grid" ? "primary" : "ghost"} size="icon-sm" aria-label="Grid view" aria-pressed={layout === "grid"} onClick={() => setLayout("grid")}><Grid3X3 className="h-4 w-4" /></Button>
+            <div className="flex rounded-[calc(var(--radius)*0.62)] border hairline bg-[rgb(var(--line)/0.035)] p-0.5" role="group" aria-label="Layout">
+              <Button variant="ghost" size="icon-sm" className={cn("h-8 w-8 text-muted", layout === "list" && "bg-card text-accent shadow-[var(--shadow-sm)] hover:bg-card")} aria-label="List view" aria-pressed={layout === "list"} onClick={() => setLayout("list")}><List className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon-sm" className={cn("h-8 w-8 text-muted", layout === "grid" && "bg-card text-accent shadow-[var(--shadow-sm)] hover:bg-card")} aria-label="Grid view" aria-pressed={layout === "grid"} onClick={() => setLayout("grid")}><Grid3X3 className="h-4 w-4" /></Button>
             </div>
             {view === "trash" && rows.length > 0 && <Button variant="danger-ghost" onClick={() => void emptyTrash()}><Trash2 className="h-4 w-4" aria-hidden />Empty trash</Button>}
           </div>
 
           {withFolders && view === "all" && !searching && (
             <nav aria-label="Folder path" className="mb-3 flex flex-wrap items-center gap-1 text-sm">
-              <button onClick={() => setFolder(null)} data-drop-folder="root" data-drop-label="All files" onDragOver={(e) => { if (e.dataTransfer.types.includes(DRAG_TYPE)) e.preventDefault(); }} onDrop={(e) => { const raw = e.dataTransfer.getData(DRAG_TYPE); if (raw) { e.preventDefault(); e.stopPropagation(); void bulk("move", { folderId: null }, JSON.parse(raw), "Moved"); } }} className={cn("rounded-lg px-2 py-1 hover:bg-[rgb(var(--line)/0.1)]", !folder && "font-semibold")}>All files</button>
-              {path.map((p) => <span key={p.id} className="flex items-center gap-1"><ChevronRight className="h-3.5 w-3.5 text-muted" aria-hidden /><button onClick={() => setFolder(p.id)} className={cn("rounded-lg px-2 py-1 hover:bg-[rgb(var(--line)/0.1)]", p.id === folder && "font-semibold")}>{p.name}</button></span>)}
+              <button onClick={() => setFolder(null)} data-drop-folder="root" data-drop-label="All files" onDragOver={(e) => { if (e.dataTransfer.types.includes(DRAG_TYPE)) e.preventDefault(); }} onDrop={(e) => { const raw = e.dataTransfer.getData(DRAG_TYPE); if (raw) { e.preventDefault(); e.stopPropagation(); void bulk("move", { folderId: null }, JSON.parse(raw), "Moved"); } }} className={cn("rounded-lg px-2 py-1 text-muted transition-colors hover:bg-[rgb(var(--line)/0.05)] hover:text-fg", !folder && "font-medium text-fg")}>All files</button>
+              {path.map((p) => <span key={p.id} className="flex items-center gap-1"><ChevronRight className="h-3.5 w-3.5 text-muted" aria-hidden /><button onClick={() => setFolder(p.id)} className={cn("rounded-lg px-2 py-1 text-muted transition-colors hover:bg-[rgb(var(--line)/0.05)] hover:text-fg", p.id === folder && "font-medium text-fg")}>{p.name}</button></span>)}
             </nav>
           )}
 
@@ -214,9 +214,9 @@ export function FileManager({ title, description, categories, grid: gridDefault 
                   onDragOver={(e) => { if (e.dataTransfer.types.includes(DRAG_TYPE)) { e.preventDefault(); e.currentTarget.setAttribute("data-drop-hover", "true"); } }}
                   onDragLeave={(e) => e.currentTarget.removeAttribute("data-drop-hover")}
                   onDrop={(e) => { e.currentTarget.removeAttribute("data-drop-hover"); const raw = e.dataTransfer.getData(DRAG_TYPE); if (raw) { e.preventDefault(); e.stopPropagation(); void bulk("move", { folderId: f.id }, JSON.parse(raw), `Moved to ${f.name}`); } }}
-                  className="glass flex items-center gap-3 p-3"
+                  className="card card-hover flex items-center gap-3 p-3"
                 >
-                  <button onClick={() => setFolder(f.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left"><Folder className="h-6 w-6 shrink-0 text-accent" aria-hidden /><span className="min-w-0"><span className="block truncate text-sm font-medium">{f.name}</span><span className="block text-xs text-muted">{f.fileCount} file{f.fileCount === 1 ? "" : "s"}</span></span></button>
+                  <button onClick={() => setFolder(f.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-accent-soft text-accent"><Folder className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden /></span><span className="min-w-0"><span className="block truncate text-sm font-medium">{f.name}</span><span className="block text-xs text-muted">{f.fileCount} file{f.fileCount === 1 ? "" : "s"}</span></span></button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={`Folder options for ${f.name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => void renameFolder(f)}><Pencil className="h-4 w-4" aria-hidden />Rename</DropdownMenuItem><DropdownMenuItem danger onSelect={() => void deleteFolder(f)}><Trash2 className="h-4 w-4" aria-hidden />Delete folder</DropdownMenuItem></DropdownMenuContent>
@@ -227,7 +227,7 @@ export function FileManager({ title, description, categories, grid: gridDefault 
           )}
 
           {selected.size > 0 && (
-            <div className="glass glass-strong sticky top-3 z-10 mb-3 flex flex-wrap items-center gap-2 p-2 pl-4" role="toolbar" aria-label="Actions for selected files">
+            <div className="glass-float animate-rise sticky top-16 z-10 mb-3 flex flex-wrap items-center gap-2 p-2 pl-4 lg:top-4" role="toolbar" aria-label="Actions for selected files">
               <span className="mr-2 text-sm font-medium">{selected.size} selected</span>
               {view === "trash" ? (
                 <><Button size="sm" variant="glass" onClick={() => void bulk("restore")}><RotateCcw className="h-4 w-4" aria-hidden />Restore</Button><Button size="sm" variant="danger" onClick={() => void purgeSelected()}><Trash2 className="h-4 w-4" aria-hidden />Delete forever</Button></>
@@ -255,10 +255,10 @@ export function FileManager({ title, description, categories, grid: gridDefault 
           ) : layout === "grid" ? (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {rows.map((f) => (
-                <li key={f.id} draggable={withFolders && view === "all"} onDragStart={(e) => { e.dataTransfer.setData(DRAG_TYPE, JSON.stringify(selected.has(f.id) ? [...selected] : [f.id])); e.dataTransfer.effectAllowed = "move"; }} className={cn("glass group relative p-2", selected.has(f.id) && "ring-2 ring-accent")}>
+                <li key={f.id} draggable={withFolders && view === "all"} onDragStart={(e) => { e.dataTransfer.setData(DRAG_TYPE, JSON.stringify(selected.has(f.id) ? [...selected] : [f.id])); e.dataTransfer.effectAllowed = "move"; }} className={cn("card card-hover group relative p-2", selected.has(f.id) && "border-accent ring-2 ring-accent/25")}>
                   <button onClick={() => setOpen(f.id)} className="block w-full text-left" aria-label={`Open ${f.display_name}`}>
                     <Thumb id={f.id} category={f.category} mime={f.mime_type} name={f.display_name} />
-                    <p className="mt-2 truncate px-1 text-sm font-medium">{f.display_name}</p>
+                    <p className="mt-2 truncate px-1 text-[13.5px] font-medium">{f.display_name}</p>
                     <p className="truncate px-1 text-xs text-muted">{humanSize(Number(f.size_bytes))} · {formatDate(f.created_at)}</p>
                   </button>
                   <input type="checkbox" checked={selected.has(f.id)} onChange={() => toggle(f.id)} aria-label={`Select ${f.display_name}`} className={cn("absolute left-3.5 top-3.5 h-5 w-5 accent-[var(--accent)]", !selected.has(f.id) && selected.size === 0 && "opacity-0 focus:opacity-100 group-hover:opacity-100")} />
@@ -267,14 +267,14 @@ export function FileManager({ title, description, categories, grid: gridDefault 
               ))}
             </ul>
           ) : (
-            <div className="glass overflow-hidden !p-0">
-              <div className="flex items-center gap-3 border-b hairline px-4 py-2 text-xs text-muted">
+            <div className="card overflow-hidden !p-0">
+              <div className="flex items-center gap-3 border-b hairline bg-[rgb(var(--line)/0.02)] px-4 py-2.5 text-xs font-medium text-muted">
                 <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)))} aria-label="Select all files" className="h-4 w-4 accent-[var(--accent)]" />
                 <span className="flex-1">Name</span><span className="hidden w-20 text-right sm:block">Size</span><span className="hidden w-28 text-right md:block">Added</span><span className="w-20" />
               </div>
               <ul className="divide-y divide-[rgb(var(--line)/0.08)]">
                 {rows.map((f) => (
-                  <li key={f.id} draggable={withFolders && view === "all"} onDragStart={(e) => { e.dataTransfer.setData(DRAG_TYPE, JSON.stringify(selected.has(f.id) ? [...selected] : [f.id])); e.dataTransfer.effectAllowed = "move"; }} className={cn("flex items-center gap-3 px-4 py-2.5 hover:bg-[rgb(var(--line)/0.05)]", selected.has(f.id) && "bg-accent/10")}>
+                  <li key={f.id} draggable={withFolders && view === "all"} onDragStart={(e) => { e.dataTransfer.setData(DRAG_TYPE, JSON.stringify(selected.has(f.id) ? [...selected] : [f.id])); e.dataTransfer.effectAllowed = "move"; }} className={cn("group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[rgb(var(--line)/0.025)]", selected.has(f.id) && "bg-accent-soft hover:bg-accent-soft")}>
                     <input type="checkbox" checked={selected.has(f.id)} onChange={() => toggle(f.id)} aria-label={`Select ${f.display_name}`} className="h-4 w-4 accent-[var(--accent)]" />
                     <button onClick={() => setOpen(f.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                       <TypeIcon category={f.category} mime={f.mime_type} className="h-9 w-9" />

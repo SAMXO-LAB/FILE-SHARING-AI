@@ -60,7 +60,7 @@ export function LinksView() {
             {links.map((l) => (
               <li key={l.id} id={`link-${l.id}`} className={cn("glass p-4", l.id === openId && "ring-2 ring-accent")}>
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-500/15 text-cyan-400"><Link2 className="h-5 w-5" aria-hidden /></span>
+                  <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-50 dark:bg-cyan-500/12 text-cyan-700 dark:text-cyan-300"><Link2 className="h-5 w-5" aria-hidden /></span>
                   <div className="min-w-0 flex-1">
                     <a href={l.final_url ?? l.url} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-center gap-1.5 font-medium hover:underline"><span className="truncate">{l.title ?? l.url}</span><ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden /></a>
                     <p className="truncate text-xs text-muted">{l.site_name ?? host(l.url)} · saved {formatDate(l.created_at)}</p>

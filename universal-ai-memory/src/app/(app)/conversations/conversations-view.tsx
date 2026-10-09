@@ -34,7 +34,7 @@ export function ConversationsView() {
           <ul className="grid gap-3 sm:grid-cols-2">
             {rows.map((c) => (
               <li key={c.id}>
-                <Link href={`/conversations/${c.id}`} className="glass flex h-full items-start gap-3 p-4 transition-transform hover:-translate-y-0.5">
+                <Link href={`/conversations/${c.id}`} className="glass flex h-full items-start gap-3 p-4 card-hover">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-green-500/15 text-green-400">{c.source_id === "telegram" ? <Send className="h-5 w-5" aria-hidden /> : <MessageCircle className="h-5 w-5" aria-hidden />}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{c.title}</p>

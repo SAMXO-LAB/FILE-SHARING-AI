@@ -57,9 +57,9 @@ export function UploadTray() {
   const failed = items.filter((i) => i.status === "failed").length;
   const title = activeCount > 0 ? `Uploading ${activeCount} file${activeCount === 1 ? "" : "s"}` : failed ? `${failed} upload${failed === 1 ? "" : "s"} failed` : "Uploads complete";
   return (
-    <section aria-label="Uploads" className="glass glass-strong fixed bottom-4 right-4 z-40 w-[min(26rem,calc(100vw-2rem))] overflow-hidden">
+    <section aria-label="Uploads" className="glass-float animate-rise fixed bottom-4 right-4 z-40 w-[min(24rem,calc(100vw-2rem))] overflow-hidden" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
       <header className="flex items-center gap-2 px-4 py-3">
-        <h2 className="flex-1 text-sm font-semibold" aria-live="polite">{title}</h2>
+        <h2 className="flex-1 text-[13.5px] font-semibold" aria-live="polite">{title}</h2>
         {done > 0 && <button onClick={clearFinished} className="text-xs text-muted hover:text-fg">Clear finished</button>}
         <Button size="icon-sm" variant="ghost" aria-label={open ? "Collapse uploads" : "Expand uploads"} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -67,7 +67,7 @@ export function UploadTray() {
       </header>
       {open && (
         <>
-          <ul className="max-h-72 divide-y divide-[rgb(var(--line)/0.1)] overflow-y-auto border-t hairline">{items.map((it) => <UploadRow key={it.id} it={it} />)}</ul>
+          <ul className="max-h-72 divide-y divide-[rgb(var(--line)/0.07)] overflow-y-auto border-t hairline">{items.map((it) => <UploadRow key={it.id} it={it} />)}</ul>
           <div className="border-t hairline px-4 py-2 text-right"><Link href="/uploads" className="text-xs text-accent hover:underline">Open Uploads</Link></div>
         </>
       )}

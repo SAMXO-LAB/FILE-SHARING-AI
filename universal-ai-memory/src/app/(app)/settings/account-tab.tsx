@@ -165,7 +165,7 @@ function Activity() {
   return (
     <Section title="Recent account activity" description="Security-relevant events on your account, including when people you've shared files with open them. Sign-in events are kept by the authentication service and aren't listed here.">
       {q.loading ? <Skeleton className="h-16" /> : q.error ? <p role="alert" className="text-sm text-danger">{q.error}</p> : (q.data?.events.length ?? 0) === 0 ? <p className="text-sm text-muted">Nothing yet.</p> : (
-        <ul className="divide-y divide-[rgb(var(--line)/0.1)] text-sm">
+        <ul className="divide-y divide-[rgb(var(--line)/0.07)] text-sm">
           {q.data!.events.map((e) => <li key={e.id} className="flex flex-wrap justify-between gap-2 py-2"><span>{(EVENT_TEXT[e.event] ?? (() => e.event))(e.metadata)}</span><span className="text-xs text-muted">{formatDateTime(e.created_at)}</span></li>)}
         </ul>
       )}

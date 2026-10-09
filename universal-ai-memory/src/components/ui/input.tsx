@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-const field = "w-full rounded-[calc(var(--radius)*0.6)] border hairline bg-[rgb(var(--surface)/calc(var(--surface-a)*0.8))] px-3.5 text-sm text-fg placeholder:text-muted/80 transition-colors focus:border-accent focus:outline-none disabled:opacity-60 aria-[invalid=true]:border-danger";
+const field = "w-full rounded-[calc(var(--radius)*0.6)] border hairline bg-card px-3.5 text-sm text-fg shadow-[var(--shadow-xs)] placeholder:text-subtle transition-[border-color,box-shadow] duration-150 focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-ring)] focus:outline-none focus-visible:outline-none disabled:opacity-60 aria-[invalid=true]:border-danger";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(({ className, type = "text", ...props }, ref) => (
   <input ref={ref} type={type} className={cn(field, "h-10", className)} {...props} />
@@ -14,7 +14,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
 Textarea.displayName = "Textarea";
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("mb-1.5 block text-sm font-medium", className)} {...props} />;
+  return <label className={cn("mb-1.5 block text-[13px] font-medium text-fg", className)} {...props} />;
 }
 
 export function FieldError({ children, id }: { children?: React.ReactNode; id?: string }) {

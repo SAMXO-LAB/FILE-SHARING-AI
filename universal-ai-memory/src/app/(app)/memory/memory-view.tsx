@@ -27,7 +27,7 @@ interface SearchResult { cards: ContentCard[]; sections: { key: string; label: s
 interface TimelineData { items: TimelineItem[]; nextBefore: string | null }
 
 function Toggle({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" aria-pressed={on} onClick={onClick} className={cn("rounded-full border px-3 py-1 text-sm transition-colors", on ? "border-accent bg-accent/15 text-accent" : "border-line text-muted hover:text-fg")}>{children}</button>;
+  return <button type="button" aria-pressed={on} onClick={onClick} className={cn("rounded-full border px-3 py-1 text-sm transition-colors", on ? "border-accent bg-accent-soft text-accent" : "border-line text-muted hover:text-fg")}>{children}</button>;
 }
 
 function SearchTab() {
@@ -81,10 +81,10 @@ function SearchTab() {
 
   return (
     <div className="space-y-4">
-      <form role="search" onSubmit={(e) => { e.preventDefault(); submit(); }} className="glass glass-strong flex items-center gap-2 p-2 !rounded-[calc(var(--radius)*1.2)]">
+      <form role="search" onSubmit={(e) => { e.preventDefault(); submit(); }} className="focus-ring flex items-center gap-2 rounded-[calc(var(--radius)*1.15)] border hairline bg-card p-2 shadow-[var(--shadow-sm)] transition-[border-color,box-shadow] duration-150">
         <Search className="ml-2 h-5 w-5 shrink-0 text-muted" aria-hidden />
         <label htmlFor="mem-q" className="sr-only">Search your memory</label>
-        <Input id="mem-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search files, links, notes and chats…" className="border-0 bg-transparent shadow-none focus-visible:ring-0" autoComplete="off" />
+        <Input id="mem-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search files, links, notes and chats…" className="border-0 bg-transparent shadow-none focus:shadow-none focus-visible:ring-0" autoComplete="off" />
         {q && <Button type="button" size="icon-sm" variant="ghost" aria-label="Clear search" onClick={() => { setQ(""); setCommitted(""); router.replace("/memory", { scroll: false }); }}><X className="h-4 w-4" /></Button>}
         <Button type="submit"><Search className="h-4 w-4" aria-hidden />Search</Button>
       </form>

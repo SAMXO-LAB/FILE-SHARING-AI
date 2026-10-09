@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, MailCheck, XCircle } from "lucide-react";
 import { z } from "zod";
 import { AuthShell } from "@/components/app/auth-shell";
+import { GoogleButton, OrDivider } from "@/components/app/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { FieldError, Hint, Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/misc";
@@ -16,7 +17,7 @@ const schema = z.object({ displayName: z.string().trim().max(80).optional(), use
 type Values = z.infer<typeof schema>;
 type Check = { state: "idle" | "checking" | "ok" | "bad"; message?: string };
 
-export function SignupForm() {
+export function SignupForm({ google = false }: { google?: boolean }) {
   const [done, setDone] = useState<{ email: string; needsConfirmation: boolean } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [check, setCheck] = useState<Check>({ state: "idle" });
@@ -58,7 +59,7 @@ export function SignupForm() {
     return (
       <AuthShell title="Check your email">
         <div className="flex flex-col items-center gap-3 py-2 text-center">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-accent/15 text-accent"><MailCheck className="h-6 w-6" /></div>
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-accent-soft text-accent"><MailCheck className="h-6 w-6" /></div>
           <p className="text-sm text-muted">We sent a verification link to <span className="text-fg">{done.email}</span>. Open it to finish creating your account, then sign in.</p>
           <Button asChild variant="glass" className="mt-2"><Link href="/login">Go to sign in</Link></Button>
         </div>
@@ -68,6 +69,7 @@ export function SignupForm() {
 
   return (
     <AuthShell title="Create your account" subtitle="One private place to search everything you save." footer={<>Already have an account? <Link href="/login" className="text-accent underline-offset-4 hover:underline">Sign in</Link></>}>
+      {google && <><GoogleButton label="Sign up with Google" /><OrDivider /></>}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div>
           <Label htmlFor="displayName">Name <span className="font-normal text-muted">(optional)</span></Label>

@@ -15,17 +15,17 @@ export function iconKey(opts: { type?: string; category?: string | null; mime?: 
 }
 
 const TONE: Record<string, string> = {
-  image: "bg-fuchsia-500/15 text-fuchsia-400", video: "bg-rose-500/15 text-rose-400", audio: "bg-amber-500/15 text-amber-400",
-  document: "bg-sky-500/15 text-sky-400", data: "bg-emerald-500/15 text-emerald-400", code: "bg-violet-500/15 text-violet-400",
-  archive: "bg-orange-500/15 text-orange-400", link: "bg-cyan-500/15 text-cyan-400", note: "bg-yellow-500/15 text-yellow-400",
-  conversation: "bg-green-500/15 text-green-400", other: "bg-slate-500/15 text-slate-400",
+  image: "bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-500/12 dark:text-fuchsia-300", video: "bg-rose-50 text-rose-600 dark:bg-rose-500/12 dark:text-rose-300", audio: "bg-amber-50 text-amber-600 dark:bg-amber-500/12 dark:text-amber-300",
+  document: "bg-blue-50 text-blue-600 dark:bg-blue-500/14 dark:text-blue-300", data: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/12 dark:text-emerald-300", code: "bg-violet-50 text-violet-600 dark:bg-violet-500/12 dark:text-violet-300",
+  archive: "bg-orange-50 text-orange-600 dark:bg-orange-500/12 dark:text-orange-300", link: "bg-cyan-50 text-cyan-700 dark:bg-cyan-500/12 dark:text-cyan-300", note: "bg-yellow-50 text-yellow-700 dark:bg-yellow-500/12 dark:text-yellow-300",
+  conversation: "bg-green-50 text-green-600 dark:bg-green-500/12 dark:text-green-300", other: "bg-slate-100 text-slate-500 dark:bg-slate-500/14 dark:text-slate-300",
 };
 
 export function TypeIcon({ type, category, mime, className }: { type?: string; category?: string | null; mime?: string | null; className?: string }) {
   const key = iconKey({ type, category, mime });
   const Icon = CATEGORY_ICON[key];
   const tone = TONE[type && type !== "file" ? type : category ?? "other"] ?? TONE.other!;
-  return <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", tone, className)}><Icon className="h-5 w-5" aria-hidden /></span>;
+  return <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-[11px] ring-1 ring-inset ring-[rgb(var(--line)/0.05)]", tone, className)}><Icon className="h-[19px] w-[19px]" strokeWidth={1.8} aria-hidden /></span>;
 }
 
 export function StatusBadge({ status, detail }: { status: string | null | undefined; detail?: string | null }) {

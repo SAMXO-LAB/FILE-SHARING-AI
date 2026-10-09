@@ -44,6 +44,7 @@ export function AskView() {
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const loadedFor = useRef<string | null>(null);
   const autoSent = useRef(false);
 
@@ -111,8 +112,8 @@ export function AskView() {
     if (q && !urlChat && !autoSent.current) { autoSent.current = true; void send(q); }
   }, [params, urlChat, send]);
 
-  function onFiles(list: FileList | null) {
-    if (!list?.length) return;
+  function onFiles(list: FileList | File[] | null) {
+    if (!list || list.length === 0) return;
     for (const file of Array.from(list).slice(0, 4 - attachments.length)) {
       uploads.add([file], {
         source: "ai_chat",
@@ -122,6 +123,19 @@ export function AskView() {
       setAttachments((a) => [...a, { id: `pending-${file.name}`, name: file.name, state: "uploading" }]);
     }
   }
+
+  // Files dropped onto the composer are attached (not sent). The drop overlay delivers them here.
+  const onFilesRef = useRef(onFiles);
+  useEffect(() => { onFilesRef.current = onFiles; });
+  useEffect(() => {
+    const zone = formRef.current?.querySelector("[data-drop-attach]");
+    if (!zone) return;
+    const h = (e: Event) => {
+      onFilesRef.current((e as CustomEvent<File[]>).detail);
+    };
+    zone.addEventListener("memory:attach-files", h);
+    return () => zone.removeEventListener("memory:attach-files", h);
+  }, []);
 
   // Uploads that never reach "uploaded": failed/cancelled ones show as unreadable; duplicates reuse the existing file.
   useEffect(() => {
@@ -156,27 +170,27 @@ export function AskView() {
   const lastUserQuestion = (i: number) => { for (let k = i; k >= 0; k--) if (messages[k]?.role === "user") return messages[k]!.content; return ""; };
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col">
-      <header className="mb-4 flex items-center gap-2">
-        <h1 className="min-w-0 flex-1 truncate text-xl font-semibold tracking-tight">{conversationId ? title : "Ask AI"}</h1>
+    <div className="mx-auto -mb-24 flex min-h-[calc(100dvh-4rem)] w-full max-w-[880px] flex-col lg:min-h-[calc(100dvh-2.5rem)]">
+      <header className="mb-6 flex items-center gap-2 border-b hairline pb-4">
+        <h1 className="min-w-0 flex-1 truncate text-[20px] font-semibold tracking-[-0.02em]">{conversationId ? title : "Ask AI"}</h1>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild><Button variant="glass" size="sm"><History className="h-4 w-4" aria-hidden />History</Button></DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild><Button variant="glass" size="sm"><History className="h-4 w-4 text-muted" aria-hidden /><span className="hidden sm:inline">History</span></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="max-h-96 w-80 overflow-y-auto">
             <DropdownMenuLabel>Recent chats</DropdownMenuLabel>
             {history.loading && <div className="p-2"><Skeleton className="h-8" /></div>}
             {history.data?.conversations.length === 0 && <p className="px-3 py-2 text-sm text-muted">No chats yet.</p>}
             {history.data?.conversations.map((c) => (
-              <DropdownMenuItem key={c.id} onSelect={() => router.push(`/ask?c=${c.id}`)} className={cn("justify-between gap-3", c.id === conversationId && "bg-[rgb(var(--line)/0.1)]")}>
+              <DropdownMenuItem key={c.id} onSelect={() => router.push(`/ask?c=${c.id}`)} className={cn("justify-between gap-3", c.id === conversationId && "bg-accent-soft")}>
                 <span className="min-w-0"><span className="block truncate">{c.title}</span><span className="block text-xs text-muted">{timeAgo(c.updated_at)}</span></span>
                 <button className="rounded p-1 text-muted hover:text-danger" aria-label={`Delete chat ${c.title}`} onClick={(e) => { e.stopPropagation(); void remove(c.id); }}><Trash2 className="h-3.5 w-3.5" /></button>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="glass" size="sm" onClick={() => router.push("/ask")}><MessageSquarePlus className="h-4 w-4" aria-hidden />New</Button>
+        <Button variant="glass" size="sm" onClick={() => router.push("/ask")}><MessageSquarePlus className="h-4 w-4 text-muted" aria-hidden /><span className="hidden sm:inline">New chat</span><span className="sr-only sm:hidden">New chat</span></Button>
         {conversationId && (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label="Chat options"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button variant="glass" size="icon-sm" aria-label="Chat options"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => void rename()}><Pencil className="h-4 w-4" aria-hidden />Rename</DropdownMenuItem>
               <DropdownMenuItem asChild><a href={`/api/ask/conversations/${conversationId}/export`} download><Download className="h-4 w-4" aria-hidden />Export as Markdown</a></DropdownMenuItem>
@@ -197,40 +211,45 @@ export function AskView() {
         </div>
       )}
 
-      <div className="flex-1 space-y-6" aria-live="polite">
+      <div className="flex-1 space-y-8 pb-6" aria-live="polite">
         {loadingChat && <div className="space-y-3"><Skeleton className="ml-auto h-12 w-2/3" /><Skeleton className="h-40" /></div>}
         {empty && (
-          <div className="space-y-5 pt-8">
+          <div className="space-y-6 pt-6 sm:pt-10">
             <EmptyState icon={Sparkles} title="Ask about anything you've saved">
               Ask in plain language: “find the PDF about solar panels”, “what did we decide in the project chat last month?”, then follow up with “summarize the second one”. Answers cite where they came from.
             </EmptyState>
-            <div className="flex flex-wrap justify-center gap-2">{STARTERS.map((s) => <button key={s} onClick={() => void send(s)} className="glass px-3.5 py-1.5 text-sm text-muted !rounded-full hover:text-fg">{s}</button>)}</div>
+            <div className="flex flex-wrap justify-center gap-2">{STARTERS.map((s) => <button key={s} onClick={() => void send(s)} className="inline-flex h-8 items-center rounded-full border hairline bg-card px-3.5 text-[13px] text-muted shadow-[var(--shadow-xs)] transition-colors hover:border-accent/30 hover:text-accent">{s}</button>)}</div>
             {!caps.ai && <p className="text-center text-xs text-muted">No AI provider is configured on this server: you'll see matching passages and files instead of written answers.</p>}
             {caps.ai && (prefs.processing_mode === "metadata_only" || prefs.processing_mode === "extraction") && <p className="text-center text-xs text-muted">Your privacy mode keeps content away from AI providers, so answers list matching passages. <Link href="/settings?tab=privacy" className="underline">Change this</Link></p>}
           </div>
         )}
         {messages.map((m, i) => m.role === "user" ? (
-          <div key={m.id} className="flex flex-col items-end gap-1.5">
-            <div className="bubble bubble-user max-w-[85%] whitespace-pre-wrap break-words text-[15px]">{m.content}</div>
+          <div key={m.id} className="animate-rise flex flex-col items-end gap-1.5">
+            <div className="bubble bubble-user max-w-[min(85%,640px)] whitespace-pre-wrap break-words text-[15px] leading-relaxed">{m.content}</div>
             {m.attachments && m.attachments.length > 0 && <div className="flex flex-wrap justify-end gap-1.5">{m.attachments.map((a) => <Badge key={a.id}><Paperclip className="h-3 w-3" aria-hidden />{a.name}</Badge>)}</div>}
           </div>
         ) : m.error ? (
-          <div key={m.id} role="alert" className="panel flex flex-wrap items-center gap-3 border-danger/40 p-4 text-sm"><span className="flex-1 text-danger">{m.error}</span>{m.question && <Button size="sm" variant="glass" onClick={() => { setMessages((x) => x.filter((y) => y.id !== m.id)); void send(m.question!); }}>Try again</Button>}</div>
+          <div key={m.id} role="alert" className="card flex flex-wrap items-center gap-3 border-danger/25 bg-danger/5 p-4 text-sm"><span className="flex-1 text-danger">{m.error}</span>{m.question && <Button size="sm" variant="glass" onClick={() => { setMessages((x) => x.filter((y) => y.id !== m.id)); void send(m.question!); }}>Try again</Button>}</div>
         ) : (
           <AssistantBlock key={m.id} m={m} onAsk={(t) => void send(t)} onRefine={(kind) => void send(lastUserQuestion(i), { dropped: [kind] })} />
         ))}
         {busy && (
-          <div className="glass flex items-center gap-3 p-5 text-sm text-muted" role="status"><Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />Searching your memory…</div>
+          <div className="flex items-center gap-3 px-1 text-sm text-muted" role="status"><span className="grid h-7 w-7 place-items-center rounded-lg bg-accent-soft"><Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden /></span>Searching your memory…</div>
         )}
         <div ref={endRef} />
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); void send(input); }} className="sticky bottom-3 mt-6">
-        <div className="glass glass-strong p-2 !rounded-[calc(var(--radius)*1.2)]">
+      {/* Solid, sticky composer with a fade above it so answers never show through or sit underneath. */}
+      <form
+        ref={formRef}
+        onSubmit={(e) => { e.preventDefault(); void send(input); }}
+        className="sticky bottom-0 z-10 -mx-2 mt-2 bg-gradient-to-t from-bg from-70% to-transparent px-2 pb-[max(1rem,env(safe-area-inset-bottom))] pt-6"
+      >
+        <div data-drop-attach data-drop-label="your question" className="focus-ring rounded-[calc(var(--radius)*1.25)] border hairline bg-card p-2 shadow-[var(--shadow-md)] transition-[border-color,box-shadow] duration-150 data-[drop-hover=true]:!bg-accent-soft">
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-2 pb-2 pt-1">
               {attachments.map((a) => (
-                <span key={a.id} className={cn("inline-flex items-center gap-1.5 rounded-full border py-0.5 pl-2.5 pr-1 text-xs", a.state === "failed" ? "border-danger/50 text-danger" : "border-line text-muted")} title={a.error}>
+                <span key={a.id} className={cn("inline-flex max-w-full items-center gap-1.5 rounded-lg border py-1 pl-2.5 pr-1 text-xs", a.state === "failed" ? "border-danger/30 bg-danger/5 text-danger" : "hairline bg-[rgb(var(--line)/0.03)] text-fg")} title={a.error}>
                   {(a.state === "uploading" || a.state === "processing") && <Loader2 className="h-3 w-3 animate-spin" aria-hidden />}
                   {a.name}{a.state === "processing" && " · reading…"}{a.state === "failed" && " · unreadable"}
                   <button type="button" onClick={() => setAttachments((x) => x.filter((y) => y.id !== a.id))} className="grid h-4 w-4 place-items-center rounded-full hover:bg-[rgb(var(--line)/0.2)]" aria-label={`Remove ${a.name}`}><X className="h-3 w-3" /></button>
@@ -240,19 +259,19 @@ export function AskView() {
           )}
           <div className="flex items-end gap-1">
             <input ref={fileRef} type="file" multiple className="sr-only" onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
-            <Button type="button" variant="ghost" size="icon" aria-label="Attach a file" onClick={() => fileRef.current?.click()} disabled={attachments.length >= 4}><Paperclip className="h-5 w-5" /></Button>
+            <Button type="button" variant="ghost" size="icon" className="text-muted hover:text-fg" aria-label="Attach a file" onClick={() => fileRef.current?.click()} disabled={attachments.length >= 4}><Paperclip className="h-[18px] w-[18px]" /></Button>
             <label htmlFor="ask-input" className="sr-only">Your question</label>
             <textarea
               id="ask-input" ref={taRef} value={input} rows={1} maxLength={4000}
               onChange={(e) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`; }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); if (!blocked) void send(input); } }}
               placeholder={attachments.length ? "Ask about the attached file…" : "Ask anything about your digital life..."}
-              className="max-h-44 min-h-11 flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] outline-none placeholder:text-muted/80"
+              className="max-h-44 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[15px] leading-6 outline-none placeholder:text-subtle focus-visible:outline-none"
             />
-            <Button type="submit" size="icon" aria-label="Send" disabled={!input.trim() || busy || blocked}><ArrowUp className="h-5 w-5" /></Button>
+            <Button type="submit" size="icon" className="rounded-[11px]" aria-label="Send" disabled={!input.trim() || busy || blocked}>{busy ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.2} />}</Button>
           </div>
         </div>
-        <p className="mt-2 text-center text-[11px] text-muted">Answers can be wrong. Check the sources before relying on them.</p>
+        <p className="mt-2 text-center text-[11.5px] text-subtle">{blocked ? "Waiting for attachments to finish reading…" : "Answers can be wrong. Check the sources before relying on them."}</p>
       </form>
     </div>
   );

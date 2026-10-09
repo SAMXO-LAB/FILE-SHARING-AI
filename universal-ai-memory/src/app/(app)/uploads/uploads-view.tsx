@@ -65,17 +65,17 @@ export function UploadsView() {
           <div className="space-y-8">
             {uploads.items.length > 0 && (
               <section aria-labelledby="up-now"><h2 id="up-now" className="mb-2 text-sm font-semibold text-muted">From this browser</h2>
-                <ul className="glass divide-y divide-[rgb(var(--line)/0.1)] overflow-hidden p-0">{uploads.items.map((it) => <UploadRow key={it.id} it={it} />)}</ul>
+                <ul className="glass divide-y divide-[rgb(var(--line)/0.07)] overflow-hidden p-0">{uploads.items.map((it) => <UploadRow key={it.id} it={it} />)}</ul>
               </section>
             )}
             {serverActive.length > 0 && (
               <section aria-labelledby="up-proc"><h2 id="up-proc" className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Being processed</h2>
-                <ul className="glass divide-y divide-[rgb(var(--line)/0.1)] overflow-hidden p-0">{serverActive.map((f) => <FileLine key={f.id} f={f} />)}</ul>
+                <ul className="glass divide-y divide-[rgb(var(--line)/0.07)] overflow-hidden p-0">{serverActive.map((f) => <FileLine key={f.id} f={f} />)}</ul>
               </section>
             )}
             {d && d.problems.length > 0 && (
               <section aria-labelledby="up-prob"><h2 id="up-prob" className="mb-2 flex items-center gap-2 text-sm font-semibold text-warn"><AlertTriangle className="h-4 w-4" aria-hidden />Needs attention</h2>
-                <ul className="glass divide-y divide-[rgb(var(--line)/0.1)] overflow-hidden p-0">
+                <ul className="glass divide-y divide-[rgb(var(--line)/0.07)] overflow-hidden p-0">
                   {d.problems.map((f) => (
                     <FileLine key={f.id} f={f} action={<Button size="sm" variant="glass" loading={retrying === f.id} onClick={() => void retry(f)}><RefreshCw className="h-4 w-4" aria-hidden />Try again</Button>} />
                   ))}
@@ -85,14 +85,14 @@ export function UploadsView() {
             )}
             {failedJobs.length > 0 && (
               <section aria-labelledby="up-jobs"><h2 id="up-jobs" className="mb-2 text-sm font-semibold text-muted">Background tasks that gave up</h2>
-                <ul className="glass divide-y divide-[rgb(var(--line)/0.1)] overflow-hidden p-0">
+                <ul className="glass divide-y divide-[rgb(var(--line)/0.07)] overflow-hidden p-0">
                   {failedJobs.map((j) => <li key={j.id} className="px-4 py-3 text-sm"><span className="font-medium">{JOB_LABEL[j.kind] ?? j.kind}</span><span className="text-muted"> · {timeAgo(j.created_at)} · tried {j.attempts} times</span>{j.last_error && <p className="mt-0.5 text-xs text-danger">{j.last_error}</p>}</li>)}
                 </ul>
               </section>
             )}
             {d && d.recent.length > 0 && (
               <section aria-labelledby="up-recent"><h2 id="up-recent" className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted"><CheckCircle2 className="h-4 w-4 text-ok" aria-hidden />Recently added</h2>
-                <ul className="glass divide-y divide-[rgb(var(--line)/0.1)] overflow-hidden p-0">{d.recent.map((f) => <FileLine key={f.id} f={f} />)}</ul>
+                <ul className="glass divide-y divide-[rgb(var(--line)/0.07)] overflow-hidden p-0">{d.recent.map((f) => <FileLine key={f.id} f={f} />)}</ul>
               </section>
             )}
           </div>

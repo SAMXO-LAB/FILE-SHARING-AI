@@ -14,7 +14,8 @@ const jwt = () => `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: userId, aud
 const session = () => ({ access_token: jwt(), token_type: "bearer", expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: "refresh", user });
 
 const profile = { id: userId, username: "smoke", display_name: "Smoke Test", avatar_url: null, bio: null, profile_visibility: "private", username_changed_at: null, storage_quota_bytes: 5368709120, max_upload_bytes: 2147483648, created_at: now };
-const prefs = { user_id: userId, theme: "liquid-glass", color_mode: "dark", accent_color: "#7c8cff", background_style: "gradient", sidebar_style: "glass", border_radius: "lg", chat_bubble_style: "soft", animation_level: "normal", high_contrast: false, sidebar_collapsed: false, processing_mode: "extraction", semantic_indexing: true, auto_categorize: true, response_style: "balanced", search_recency_boost: true, save_search_history: true, privacy_acknowledged_at: null, notify_upload_complete: true, notify_processing_complete: true, notify_import_failures: true, notify_security_alerts: true };
+// Starts on the pre-redesign stored defaults (system mode, old purple accent) to check they map to the new look.
+const prefs = { user_id: userId, theme: "liquid-glass", color_mode: process.env.MOCK_COLOR_MODE ?? "light", accent_color: "#7c8cff", background_style: "gradient", sidebar_style: "glass", border_radius: "lg", chat_bubble_style: "soft", animation_level: "normal", high_contrast: false, sidebar_collapsed: false, processing_mode: "extraction", semantic_indexing: true, auto_categorize: true, response_style: "balanced", search_recency_boost: true, save_search_history: true, privacy_acknowledged_at: null, notify_upload_complete: true, notify_processing_complete: true, notify_import_failures: true, notify_security_alerts: true };
 const tables = { profiles: profile, user_preferences: prefs };
 
 const log = [];

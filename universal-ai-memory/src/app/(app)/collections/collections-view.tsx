@@ -52,7 +52,7 @@ export function CollectionsView() {
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {cols.map((c) => (
-              <li key={c.id} data-drop-collection={c.id} data-drop-label={c.name} className="glass relative p-4 transition-transform hover:-translate-y-0.5 data-[drop-hover=true]:ring-2 data-[drop-hover=true]:ring-accent">
+              <li key={c.id} data-drop-collection={c.id} data-drop-label={c.name} className="glass relative p-4 card-hover data-[drop-hover=true]:ring-2 data-[drop-hover=true]:ring-accent">
                 <div className="flex items-start gap-3">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl" style={{ background: `${c.color ?? "#6366f1"}26`, color: c.color ?? "#6366f1" }}><Layers className="h-5 w-5" aria-hidden /></span>
                   <div className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ export function CollectionsView() {
               <legend className="mb-1.5 text-sm font-medium">Colour</legend>
               <div className="flex flex-wrap gap-2">
                 {COLORS.map((c) => (
-                  <button key={c} type="button" aria-label={`Colour ${c}`} aria-pressed={color === c} onClick={() => setColor(c)} className="h-7 w-7 rounded-full ring-offset-2 ring-offset-[rgb(var(--bg))] aria-pressed:ring-2" style={{ background: c, ["--tw-ring-color" as string]: c }} />
+                  <button key={c} type="button" aria-label={`Colour ${c}`} aria-pressed={color === c} onClick={() => setColor(c)} className="h-7 w-7 rounded-full ring-offset-2 ring-offset-[var(--card)] aria-pressed:ring-2" style={{ background: c, ["--tw-ring-color" as string]: c }} />
                 ))}
               </div>
             </fieldset>

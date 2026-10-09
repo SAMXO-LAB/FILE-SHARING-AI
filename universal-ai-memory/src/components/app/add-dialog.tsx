@@ -34,20 +34,20 @@ function FilesTab({ folderId, onAdded }: { folderId: string | null; onAdded: () 
     <div className="space-y-4">
       <p className="text-sm text-muted">PDFs, documents, spreadsheets, images, audio, video, archives and more. You can also drag files anywhere on this page.</p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="glass flex cursor-pointer items-center gap-3 p-4 hover:-translate-y-0.5 transition-transform">
+        <label className="glass flex cursor-pointer items-center gap-3 p-4  transition-transform">
           <FileUp className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Choose files</span>
           <input type="file" multiple className={input} onChange={(e) => { picks(e.target.files); e.target.value = ""; }} />
         </label>
-        <label className="glass flex cursor-pointer items-center gap-3 p-4 hover:-translate-y-0.5 transition-transform">
+        <label className="glass flex cursor-pointer items-center gap-3 p-4  transition-transform">
           <FolderUp className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Choose a folder</span>
           {/* @ts-expect-error webkitdirectory is non-standard but widely supported */}
           <input type="file" multiple webkitdirectory="" className={input} onChange={(e) => { picks(e.target.files); e.target.value = ""; }} />
         </label>
-        <label className="glass flex cursor-pointer items-center gap-3 p-4 hover:-translate-y-0.5 transition-transform sm:hidden">
+        <label className="glass flex cursor-pointer items-center gap-3 p-4  transition-transform sm:hidden">
           <ImageIcon className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Photos and videos</span>
           <input type="file" multiple accept="image/*,video/*" className={input} onChange={(e) => { picks(e.target.files); e.target.value = ""; }} />
         </label>
-        <label className="glass flex cursor-pointer items-center gap-3 p-4 hover:-translate-y-0.5 transition-transform sm:hidden">
+        <label className="glass flex cursor-pointer items-center gap-3 p-4  transition-transform sm:hidden">
           <Camera className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Take a photo</span>
           <input type="file" accept="image/*" capture="environment" className={input} onChange={(e) => { picks(e.target.files); e.target.value = ""; }} />
         </label>

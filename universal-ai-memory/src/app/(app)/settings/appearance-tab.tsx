@@ -7,23 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { api, errorMessage } from "@/lib/client/api";
 import { applyThemeToDom, themeFromPrefs } from "@/lib/theme-state";
-import { customThemeSchema, THEMES, type CustomTheme } from "@/lib/themes";
+import { customThemeSchema, DEFAULT_ACCENT, LEGACY_DEFAULT_ACCENT, THEMES, type CustomTheme } from "@/lib/themes";
 import type { Preferences } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Row, Section, Segmented, ToggleRow } from "./parts";
 
-const ACCENTS = ["#7c8cff", "#22d3ee", "#34d399", "#f59e0b", "#fb7185", "#c084fc", "#60a5fa", "#f472b6"];
+const ACCENTS = ["#2563eb", "#1d4ed8", "#0ea5e9", "#0891b2", "#16a34a", "#7c3aed", "#db2777", "#0f172a"];
 type Tokens = CustomTheme["tokens"];
 
 const FIELDS: { key: keyof Pick<Tokens, "background" | "backgroundAlt" | "surface" | "foreground" | "muted" | "glowA" | "glowB">; label: string; fallback: string }[] = [
-  { key: "background", label: "Background", fallback: "#0a0f1f" }, { key: "backgroundAlt", label: "Background (second)", fallback: "#141b36" },
-  { key: "surface", label: "Panel tint", fallback: "#ffffff" }, { key: "foreground", label: "Text", fallback: "#eef1ff" }, { key: "muted", label: "Secondary text", fallback: "#9aa4c7" },
-  { key: "glowA", label: "Glow A", fallback: "#5b6cff" }, { key: "glowB", label: "Glow B", fallback: "#22d3ee" },
+  { key: "background", label: "Background", fallback: "#f8fafc" }, { key: "backgroundAlt", label: "Background (second)", fallback: "#f1f5f9" },
+  { key: "surface", label: "Panel tint", fallback: "#ffffff" }, { key: "foreground", label: "Text", fallback: "#0f172a" }, { key: "muted", label: "Secondary text", fallback: "#64748b" },
+  { key: "glowA", label: "Glow A", fallback: "#dbeafe" }, { key: "glowB", label: "Glow B", fallback: "#e0f2fe" },
 ];
 
 function ThemeCard({ id, label, description, colors, active, onSelect }: { id: string; label: string; description: string; colors: string[]; active: boolean; onSelect: () => void }) {
   return (
-    <button type="button" role="radio" aria-checked={active} onClick={onSelect} data-testid={`theme-${id}`} className={cn("relative rounded-xl border p-3 text-left transition-colors", active ? "border-accent ring-2 ring-accent/40" : "hairline hover:bg-[rgb(var(--line)/0.06)]")}>
+    <button type="button" role="radio" aria-checked={active} onClick={onSelect} data-testid={`theme-${id}`} className={cn("relative rounded-xl border bg-card p-3 text-left transition-[border-color,box-shadow] duration-150", active ? "border-accent ring-2 ring-accent/20" : "hairline hover:border-[rgb(var(--line)/0.18)]")}>
       <span className="mb-2 flex h-14 overflow-hidden rounded-lg" aria-hidden>{colors.map((c, i) => <span key={i} className="flex-1" style={{ background: c }} />)}</span>
       <span className="block text-sm font-medium">{label}</span>
       <span className="block text-xs text-muted">{description}</span>
@@ -66,7 +66,7 @@ function CustomEditor() {
         <div><Label htmlFor="c-op">Panel opacity ({tokens.surfaceOpacity === undefined ? "theme default" : `${Math.round(tokens.surfaceOpacity * 100)}%`})</Label><Input id="c-op" type="range" min={0.35} max={1} step={0.01} value={tokens.surfaceOpacity ?? 0.5} onChange={(e) => set("surfaceOpacity", Number(e.target.value))} className="px-0" /></div>
         <div><Label htmlFor="c-blur">Blur ({tokens.blur === undefined ? "theme default" : `${tokens.blur}px`})</Label><Input id="c-blur" type="range" min={0} max={40} step={1} value={tokens.blur ?? 22} onChange={(e) => set("blur", Number(e.target.value))} className="px-0" /></div>
       </div>
-      <Row label="Base"><Segmented label="Base mode" value={tokens.mode ?? "dark"} onChange={(v) => set("mode", v)} options={[{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }]} /></Row>
+      <Row label="Base"><Segmented label="Base mode" value={tokens.mode ?? "light"} onChange={(v) => set("mode", v)} options={[{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }]} /></Row>
       <div className="flex gap-2"><Button loading={busy} onClick={() => void save()}>Save and use</Button><Button variant="ghost" onClick={() => setTokens({})}>Reset colours</Button></div>
     </Section>
   );
@@ -75,7 +75,8 @@ function CustomEditor() {
 export function AppearanceTab() {
   const { prefs, updatePrefs, customTokens } = useApp();
   const save = (patch: Partial<Preferences>) => void updatePrefs(patch).catch((e) => toast.error(errorMessage(e)));
-  const customColors = (() => { const t = (customTokens ?? {}) as Tokens; return [t.background ?? "#0a0f1f", t.glowA ?? "#5b6cff", t.glowB ?? "#22d3ee"]; })();
+  const accent = prefs.accent_color.toLowerCase() === LEGACY_DEFAULT_ACCENT ? DEFAULT_ACCENT : prefs.accent_color.toLowerCase();
+  const customColors = (() => { const t = (customTokens ?? {}) as Tokens; return [t.background ?? "#f8fafc", t.glowA ?? "#2563eb", t.glowB ?? "#dbeafe"]; })();
 
   return (
     <div className="space-y-5">
@@ -91,9 +92,9 @@ export function AppearanceTab() {
 
       <Section title="Accent colour">
         <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Accent colour">
-          {ACCENTS.map((c) => <button key={c} type="button" role="radio" aria-checked={prefs.accent_color.toLowerCase() === c} aria-label={`Accent ${c}`} onClick={() => save({ accent_color: c })} className="grid h-8 w-8 place-items-center rounded-full ring-offset-2 ring-offset-[rgb(var(--bg))] aria-checked:ring-2" style={{ background: c, ["--tw-ring-color" as string]: c }}>{prefs.accent_color.toLowerCase() === c && <Check className="h-4 w-4 text-white mix-blend-difference" aria-hidden />}</button>)}
+          {ACCENTS.map((c) => <button key={c} type="button" role="radio" aria-checked={accent === c} aria-label={`Accent ${c}`} onClick={() => save({ accent_color: c })} className="grid h-8 w-8 place-items-center rounded-full ring-offset-2 ring-offset-[var(--card)] aria-checked:ring-2" style={{ background: c, ["--tw-ring-color" as string]: c }}>{accent === c && <Check className="h-4 w-4 text-white" aria-hidden />}</button>)}
           <label htmlFor="accent-custom" className="ml-2 text-sm text-muted">Custom</label>
-          <input id="accent-custom" type="color" value={prefs.accent_color} onChange={(e) => save({ accent_color: e.target.value })} className="h-8 w-10 cursor-pointer rounded-md border hairline bg-transparent p-0.5" />
+          <input id="accent-custom" type="color" value={accent} onChange={(e) => save({ accent_color: e.target.value })} className="h-8 w-10 cursor-pointer rounded-md border hairline bg-transparent p-0.5" />
         </div>
       </Section>
 

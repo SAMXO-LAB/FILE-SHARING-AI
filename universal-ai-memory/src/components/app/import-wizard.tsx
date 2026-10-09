@@ -74,8 +74,8 @@ export function ImportWizard({ onDone, initialKind }: Props) {
         {(Object.keys(GUIDE) as Kind[]).map((k) => {
           const g = GUIDE[k];
           return (
-            <button key={k} onClick={() => setKind(k)} className="glass flex flex-col items-start gap-2 p-4 text-left transition-transform hover:-translate-y-0.5">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent/15 text-accent"><g.icon className="h-5 w-5" aria-hidden /></span>
+            <button key={k} onClick={() => setKind(k)} className="glass flex flex-col items-start gap-2 p-4 text-left card-hover">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent"><g.icon className="h-5 w-5" aria-hidden /></span>
               <span className="font-medium">{g.title}</span>
               <span className="text-xs text-muted">Import a file you exported yourself.</span>
             </button>
