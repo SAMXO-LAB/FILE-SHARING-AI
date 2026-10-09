@@ -30,23 +30,25 @@ export async function embedTexts(texts: string[], signal?: AbortSignal): Promise
   const BATCH = 64;
   for (let i = 0; i < texts.length; i += BATCH) {
     const batch = texts.slice(i, i + BATCH).map((t) => t.slice(0, 8000) || " ");
-    const timeout = AbortSignal.timeout(60_000);
-    const res = await fetch(`${cfg.baseUrl}/embeddings`, {
-      method: "POST",
-      headers: { "content-type": "application/json", ...(cfg.apiKey ? { authorization: `Bearer ${cfg.apiKey}` } : {}) },
-      body: JSON.stringify({
-        model: cfg.model,
-        input: batch,
-        // text-embedding-3-* can be shortened to fit the column; other models must already match.
-        ...(cfg.model.startsWith("text-embedding-3") ? { dimensions: cfg.dimensions } : {}),
-      }),
-      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-    }).catch((e: Error) => {
-      throw new AiProviderError(`Could not reach the embedding provider (${e.message}).`);
-    });
+    // OpenAI's text-embedding-3-* and Google's gemini-embedding-* can return a shortened vector that fits
+    // the column. Other models must already produce the right size.
+    const shorten = cfg.model.startsWith("text-embedding-3") || cfg.model.startsWith("gemini-embedding");
+    const call = (withDims: boolean) => {
+      const timeout = AbortSignal.timeout(60_000);
+      return fetch(`${cfg.baseUrl}/embeddings`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(cfg.apiKey ? { authorization: `Bearer ${cfg.apiKey}` } : {}) },
+        body: JSON.stringify({ model: cfg.model, input: batch, ...(withDims ? { dimensions: cfg.dimensions } : {}) }),
+        signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+      }).catch((e: Error) => {
+        throw new AiProviderError(`Could not reach the embedding provider (${e.message}).`);
+      });
+    };
+    let res = await call(shorten);
+    if (!res.ok && res.status === 400 && shorten && !cfg.model.startsWith("text-embedding-3")) res = await call(false);
     if (!res.ok) {
       throw new AiProviderError(
-        `The embedding provider returned ${res.status}.${res.status === 401 ? " Check EMBEDDING_API_KEY / AI_API_KEY." : ""}`,
+        `The embedding provider returned ${res.status}.${res.status === 401 || res.status === 403 ? " Check EMBEDDING_API_KEY / AI_API_KEY." : res.status === 429 ? " The provider is rate limiting requests." : ""}`,
         res.status,
       );
     }

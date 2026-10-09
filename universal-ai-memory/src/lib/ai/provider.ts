@@ -72,18 +72,19 @@ function openAiMessages(messages: ChatMessage[]) {
 }
 
 async function chatOpenAi(cfg: AiConfig, messages: ChatMessage[], o: ChatOptions): Promise<string> {
-  const data = (await postJson(
-    `${cfg.baseUrl}/chat/completions`,
-    cfg.apiKey ? { authorization: `Bearer ${cfg.apiKey}` } : {},
-    {
-      model: cfg.chatModel,
-      messages: openAiMessages(messages),
-      temperature: o.temperature ?? 0.2,
-      max_tokens: o.maxTokens ?? 1500,
-      ...(o.json ? { response_format: { type: "json_object" } } : {}),
-    },
-    o.signal,
-  )) as { choices?: { message?: { content?: string } }[] };
+  const headers: Record<string, string> = cfg.apiKey ? { authorization: `Bearer ${cfg.apiKey}` } : {};
+  const body = { model: cfg.chatModel, messages: openAiMessages(messages), temperature: o.temperature ?? 0.2, max_tokens: o.maxTokens ?? 1500 };
+  let data: { choices?: { message?: { content?: string } }[] };
+  try {
+    data = (await postJson(`${cfg.baseUrl}/chat/completions`, headers, { ...body, ...(o.json ? { response_format: { type: "json_object" } } : {}) }, o.signal)) as typeof data;
+  } catch (e) {
+    // Some OpenAI-compatible providers reject JSON mode. The prompts already ask for JSON and the
+    // output is parsed tolerantly, so retry once without it.
+    if (!(o.json && e instanceof AiProviderError && (e.status === 400 || e.status === 422))) throw e;
+    const json = [...messages];
+    json.unshift({ role: "system", content: "Respond with a single JSON object and nothing else." });
+    data = (await postJson(`${cfg.baseUrl}/chat/completions`, headers, { ...body, messages: openAiMessages(json) }, o.signal)) as typeof data;
+  }
   const text = data.choices?.[0]?.message?.content;
   if (typeof text !== "string") throw new AiProviderError("The AI provider returned an empty response.");
   return text;
