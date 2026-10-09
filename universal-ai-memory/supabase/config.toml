@@ -1,0 +1,23 @@
+# Minimal Supabase CLI config for local development (`supabase start`).
+project_id = "universal-ai-memory"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 17
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+enable_signup = true
+minimum_password_length = 10
+
+[auth.email]
+enable_confirmations = false
+
+[storage]
+file_size_limit = "2GiB"
