@@ -1,6 +1,6 @@
 import "server-only";
 import { z, type ZodType } from "zod";
-import { aiConfig, type AiConfig } from "@/lib/env";
+import { aiConfig, aiConfigs, type AiConfig } from "@/lib/env";
 
 /**
  * Provider-independent chat interface. Supports OpenAI, any OpenAI-compatible endpoint
@@ -125,10 +125,51 @@ export function aiLocality(): "cloud" | "local" | null {
   return aiConfig()?.locality ?? null;
 }
 
+/** Providers that recently failed are skipped for a while so requests don't wait on them (per server instance). */
+const cooldown = new Map<string, number>();
+const keyOf = (c: AiConfig) => `${c.baseUrl}|${c.chatModel}`;
+function cooldownMs(e: AiProviderError): number {
+  if (e.status === 429) return 60_000; // rate limited: try again in a minute
+  if (e.status === 401 || e.status === 403 || e.status === 404) return 10 * 60_000; // bad key or retired model
+  if (e.status === undefined || e.status >= 500) return 30_000; // outage / timeout
+  return 0;
+}
+/** For tests. */
+export function _resetProviderCooldowns() { cooldown.clear(); }
+
+/**
+ * Sends the conversation to the first working provider in the chain (see aiConfigs()). On a failure
+ * (rate limit, outage, bad key, retired model, rejected request) the next provider is tried. If every
+ * provider fails, the last error is thrown and callers fall back to showing matching passages.
+ */
 export async function chat(messages: ChatMessage[], opts: ChatOptions = {}): Promise<string> {
-  const cfg = aiConfig();
-  if (!cfg) throw new AiNotConfiguredError();
-  return cfg.provider === "anthropic" ? chatAnthropic(cfg, messages, opts) : chatOpenAi(cfg, messages, opts);
+  const all = aiConfigs();
+  if (all.length === 0) throw new AiNotConfiguredError();
+  const now = Date.now();
+  const ready = all.filter((c) => (cooldown.get(keyOf(c)) ?? 0) <= now);
+  // If everything is cooling down, still try them all rather than failing without a request.
+  const chain = ready.length ? ready : all;
+  const failures: string[] = [];
+  let last: unknown;
+  for (const cfg of chain) {
+    if (opts.signal?.aborted) throw opts.signal.reason ?? new Error("aborted");
+    try {
+      const text = cfg.provider === "anthropic" ? await chatAnthropic(cfg, messages, opts) : await chatOpenAi(cfg, messages, opts);
+      cooldown.delete(keyOf(cfg));
+      return text;
+    } catch (e) {
+      if (!(e instanceof AiProviderError)) throw e;
+      last = e;
+      const ms = cooldownMs(e);
+      if (ms) cooldown.set(keyOf(cfg), Date.now() + ms);
+      failures.push(`${cfg.name}: ${e.status ?? "network"}`);
+      console.warn(`[ai] ${cfg.name} failed (${e.status ?? "network"}); ${chain.indexOf(cfg) < chain.length - 1 ? "trying the next provider" : "no providers left"}`);
+    }
+  }
+  if (chain.length > 1 && last instanceof AiProviderError) {
+    throw new AiProviderError(`All AI providers failed (${failures.join(", ")}). ${last.message}`, last.status);
+  }
+  throw last;
 }
 
 /** Extracts the first top-level JSON object from model output (models sometimes wrap it in prose/fences). */

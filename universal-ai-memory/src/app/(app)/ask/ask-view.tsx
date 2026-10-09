@@ -231,7 +231,7 @@ export function AskView() {
         ) : m.error ? (
           <div key={m.id} role="alert" className="card flex flex-wrap items-center gap-3 border-danger/25 bg-danger/5 p-4 text-sm"><span className="flex-1 text-danger">{m.error}</span>{m.question && <Button size="sm" variant="glass" onClick={() => { setMessages((x) => x.filter((y) => y.id !== m.id)); void send(m.question!); }}>Try again</Button>}</div>
         ) : (
-          <AssistantBlock key={m.id} m={m} onAsk={(t) => void send(t)} onRefine={(kind) => void send(lastUserQuestion(i), { dropped: [kind] })} />
+          <AssistantBlock key={m.id} m={m} onAsk={(t) => void send(t)} onRefine={(kind) => void send(lastUserQuestion(i), { dropped: [kind] })} onRetry={() => void send(lastUserQuestion(i))} />
         ))}
         {busy && (
           <div className="flex items-center gap-3 px-1 text-sm text-muted" role="status"><span className="grid h-7 w-7 place-items-center rounded-lg bg-accent-soft"><Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden /></span>Searching your memory…</div>

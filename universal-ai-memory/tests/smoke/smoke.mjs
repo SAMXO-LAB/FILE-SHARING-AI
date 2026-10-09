@@ -103,6 +103,8 @@ try {
   await page.getByText("Best match").first().waitFor({ timeout: 8000 }).catch(() => problems.push("[ask] answer did not render"));
   await page.getByRole("button", { name: "Show more" }).first().click().catch(() => problems.push("[ask] source expand missing"));
   if (!(await page.getByRole("button", { name: /View all 7/ }).isVisible())) problems.push("[ask] 'View all' missing for long sections");
+  // With a provider configured but privacy mode on "Text extraction", the answer offers an explicit opt-in.
+  if (process.env.GEMINI_API_KEY && !(await page.getByRole("button", { name: "Allow AI answers" }).isVisible())) problems.push("[ask] 'Allow AI answers' missing");
   await page.screenshot({ path: SHOT("_ask_answer"), fullPage: true });
   // The composer must not cover the last piece of content when scrolled to the bottom.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

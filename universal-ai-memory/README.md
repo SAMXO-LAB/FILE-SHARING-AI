@@ -60,7 +60,7 @@ Everything below is optional. The app is fully usable without it, and each missi
 
 | You want | Set | Without it |
 | --- | --- | --- |
-| Written answers, summaries, auto-tags | `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL` (+ `AI_BASE_URL` for compatible/local endpoints) | Ask AI lists matching passages and files |
+| Written answers, summaries, auto-tags | Any of `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` (free tiers, tried in turn with automatic fallback), and/or `AI_PROVIDER` + `AI_API_KEY` + `AI_MODEL` | Ask AI lists matching passages and files |
 | Semantic ("by meaning") search | `EMBEDDING_MODEL` (1536-dim) and a key | Keyword, name, date and sender search |
 | Text from images / scanned pages | `OCR_WITH_VISION_MODEL=true` and a vision-capable model | Images are indexed by name and metadata |
 | Audio / video transcripts | `TRANSCRIPTION_MODEL` and a key | Indexed by name and metadata |

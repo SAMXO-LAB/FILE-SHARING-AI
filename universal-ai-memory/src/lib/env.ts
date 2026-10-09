@@ -46,6 +46,8 @@ export function adminConfigured(): boolean {
 export type AiProviderKind = "openai" | "openai-compatible" | "anthropic";
 
 export interface AiConfig {
+  /** Display name (e.g. "Gemini"); never a secret. */
+  name: string;
   provider: AiProviderKind;
   apiKey?: string;
   baseUrl: string;
@@ -54,7 +56,7 @@ export interface AiConfig {
   locality: "cloud" | "local";
 }
 
-export function aiConfig(): AiConfig | null {
+function primaryAiConfig(): AiConfig | null {
   const provider = (server("AI_PROVIDER") ?? "") as AiProviderKind | "";
   if (!provider) return null;
   if (!["openai", "openai-compatible", "anthropic"].includes(provider)) return null;
@@ -67,7 +69,50 @@ export function aiConfig(): AiConfig | null {
   if (!chatModel) return null;
   // Local endpoints often need no key; hosted ones always do.
   if (!apiKey && locality !== "local") return null;
-  return { provider: provider as AiProviderKind, apiKey, baseUrl: baseUrl.replace(/\/+$/, ""), chatModel, locality };
+  return { name: provider === "anthropic" ? "Anthropic" : provider === "openai" ? "OpenAI" : "Primary", provider: provider as AiProviderKind, apiKey, baseUrl: baseUrl.replace(/\/+$/, ""), chatModel, locality };
+}
+
+/**
+ * Free/low-cost hosted providers that need only an API key. Each speaks the OpenAI chat API.
+ * The model can be overridden with <NAME>_MODEL if the default is retired.
+ */
+export const AI_PRESETS = [
+  { id: "gemini", name: "Gemini", keyVar: "GEMINI_API_KEY", modelVar: "GEMINI_MODEL", model: "gemini-3.8-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai" },
+  { id: "groq", name: "Groq", keyVar: "GROQ_API_KEY", modelVar: "GROQ_MODEL", model: "llama-3.3-70b-versatile", baseUrl: "https://api.groq.com/openai/v1" },
+  { id: "openrouter", name: "OpenRouter", keyVar: "OPENROUTER_API_KEY", modelVar: "OPENROUTER_MODEL", model: "openrouter/free", baseUrl: "https://openrouter.ai/api/v1" },
+] as const;
+
+/**
+ * Every configured chat provider, in the order they are tried: AI_PROVIDER first, then the presets
+ * (Gemini, Groq, OpenRouter, or the order in AI_FALLBACK_ORDER). If one fails or is rate limited,
+ * the next is used automatically.
+ *
+ * Privacy: all providers in the chain share the locality of the first one. If the first provider
+ * is self-hosted ("local"), hosted presets are left out so content never falls back to a cloud
+ * service without the user having chosen Cloud AI.
+ */
+export function aiConfigs(): AiConfig[] {
+  const list: AiConfig[] = [];
+  const primary = primaryAiConfig();
+  if (primary) list.push(primary);
+  if (primary?.locality === "local") return list;
+  const order = (server("AI_FALLBACK_ORDER") ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  const presets = [...AI_PRESETS].sort((a, b) => {
+    const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+  for (const p of presets) {
+    const apiKey = server(p.keyVar);
+    if (!apiKey) continue;
+    const cfg: AiConfig = { name: p.name, provider: "openai-compatible", apiKey, baseUrl: p.baseUrl, chatModel: server(p.modelVar) ?? p.model, locality: "cloud" };
+    if (!list.some((x) => x.baseUrl === cfg.baseUrl && x.chatModel === cfg.chatModel)) list.push(cfg);
+  }
+  return list;
+}
+
+/** The first provider in the chain (used for capability and privacy checks). */
+export function aiConfig(): AiConfig | null {
+  return aiConfigs()[0] ?? null;
 }
 
 export interface EmbeddingConfig {
@@ -84,8 +129,10 @@ export function embeddingConfig(): EmbeddingConfig | null {
   if (!model) return null;
   const locality =
     (server("EMBEDDING_PROVIDER_LOCALITY") ?? server("AI_PROVIDER_LOCALITY")) === "local" ? "local" : "cloud";
-  const apiKey = server("EMBEDDING_API_KEY") ?? server("AI_API_KEY");
-  const baseUrl = server("EMBEDDING_BASE_URL") ?? server("AI_BASE_URL") ?? "https://api.openai.com/v1";
+  // Gemini embedding models default to Google's endpoint and the GEMINI_API_KEY preset.
+  const gemini = model.startsWith("gemini-embedding");
+  const apiKey = server("EMBEDDING_API_KEY") ?? (gemini ? server("GEMINI_API_KEY") ?? server("AI_API_KEY") : server("AI_API_KEY"));
+  const baseUrl = server("EMBEDDING_BASE_URL") ?? (gemini ? AI_PRESETS[0].baseUrl : server("AI_BASE_URL") ?? "https://api.openai.com/v1");
   if (!apiKey && locality !== "local") return null;
   return { apiKey, baseUrl: baseUrl.replace(/\/+$/, ""), model, dimensions: 1536, locality };
 }
@@ -154,6 +201,8 @@ export function capabilities() {
     admin: adminConfigured(),
     ai: Boolean(ai),
     aiLocality: ai?.locality ?? null,
+    /** Provider names in fallback order (no keys or URLs). */
+    aiProviders: aiConfigs().map((c) => c.name),
     embeddings: Boolean(emb),
     embeddingsLocality: emb?.locality ?? null,
     transcription: Boolean(transcriptionConfig()),

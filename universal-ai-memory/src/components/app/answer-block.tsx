@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { api, errorMessage } from "@/lib/client/api";
 import { cn, formatDate } from "@/lib/utils";
 import type { Citation, ContentCard } from "@/lib/retrieval/types";
+import { mayUseAi } from "@/lib/ai/privacy";
 import { AnswerText } from "./answer-text";
+import { useApp } from "./app-context";
 import { ResultCard } from "./result-card";
 
 export interface Structured {
@@ -46,10 +48,31 @@ function citeHref(c: Citation) {
   return c.href;
 }
 
-export function AssistantBlock({ m, onAsk, onRefine }: { m: ChatMessage; onAsk: (text: string) => void; onRefine: (kind: "sender" | "date" | "type" | "source") => void }) {
+const s0 = (m: ChatMessage): Structured => m.structured ?? {};
+
+export function AssistantBlock({ m, onAsk, onRefine, onRetry }: { m: ChatMessage; onAsk: (text: string) => void; onRefine: (kind: "sender" | "date" | "type" | "source") => void; onRetry?: () => void }) {
   const router = useRouter();
-  const { prompt } = useDialogs();
-  const s = m.structured ?? {};
+  const { prompt, confirm } = useDialogs();
+  const { caps, prefs, updatePrefs } = useApp();
+  const [enabling, setEnabling] = useState(false);
+  // A provider is configured but the user's privacy mode keeps content from it: offer to change that
+  // here, with the same explicit confirmation as in Settings. Nothing changes without the user saying yes.
+  const blockedByPrivacy = s0(m).mode === "extractive" && caps.ai && caps.aiLocality === "cloud" && !mayUseAi(prefs.processing_mode, caps.aiLocality) && prefs.processing_mode !== "metadata_only";
+  async function enableAi() {
+    const ok = await confirm({
+      title: "Allow written AI answers?",
+      description: "This switches your privacy mode to Cloud AI. Passages from your files and chats, and your questions, will be sent to the AI provider in readable form to write answers. Nothing here is end-to-end encrypted. You can switch back any time in Settings → Privacy.",
+      confirmLabel: "Allow and ask again",
+    });
+    if (!ok) return;
+    setEnabling(true);
+    try {
+      await updatePrefs({ processing_mode: "cloud_ai", privacy_acknowledged: true });
+      toast.success("Cloud AI is on");
+      onRetry?.();
+    } catch (e) { toast.error(errorMessage(e)); } finally { setEnabling(false); }
+  }
+  const s = s0(m);
   const cites = s.citations ?? [];
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -106,6 +129,11 @@ export function AssistantBlock({ m, onAsk, onRefine }: { m: ChatMessage; onAsk: 
           {(s.limitations?.length ?? 0) > 0 && (
             <ul className="mt-4 space-y-1.5 rounded-xl bg-[rgb(var(--line)/0.03)] px-3 py-2.5" aria-label="Notes about this answer">
               {s.limitations!.map((l) => <li key={l} className="flex gap-2 text-[12.5px] leading-relaxed text-muted"><Info className="mt-[3px] h-3.5 w-3.5 shrink-0 text-subtle" aria-hidden />{l}</li>)}
+              {blockedByPrivacy && onRetry && (
+                <li className="pl-[22px] pt-1">
+                  <Button size="sm" variant="glass" loading={enabling} onClick={() => void enableAi()}><Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden />Allow AI answers</Button>
+                </li>
+              )}
             </ul>
           )}
         </div>
