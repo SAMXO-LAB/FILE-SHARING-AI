@@ -1,4 +1,4 @@
-import { customThemeSchema, customThemeVars, RADIUS, readableOn, THEMES } from "@/lib/themes";
+import { customThemeSchema, customThemeVars, DEFAULT_ACCENT, LEGACY_DEFAULT_ACCENT, RADIUS, readableOn, THEMES } from "@/lib/themes";
 import type { Preferences } from "@/lib/types";
 
 export interface ThemeState {
@@ -7,14 +7,16 @@ export interface ThemeState {
 }
 
 export const DEFAULT_THEME_STATE: ThemeState = {
-  attrs: { "data-theme": "liquid-glass", "data-mode": "dark", "data-color-mode": "system", "data-bg": "gradient", "data-sidebar-style": "glass", "data-bubble": "soft", "data-anim": "normal", "data-contrast": "normal" },
-  style: { "--accent": "#7c8cff", "--accent-fg": "#ffffff", "--radius": RADIUS.lg! },
+  attrs: { "data-theme": "liquid-glass", "data-mode": "light", "data-color-mode": "light", "data-bg": "gradient", "data-sidebar-style": "glass", "data-bubble": "soft", "data-anim": "normal", "data-contrast": "normal" },
+  style: { "--accent": DEFAULT_ACCENT, "--accent-fg": "#ffffff", "--radius": RADIUS.lg! },
 };
 
 export function themeFromPrefs(p: Pick<Preferences, "theme" | "color_mode" | "accent_color" | "background_style" | "sidebar_style" | "border_radius" | "chat_bubble_style" | "animation_level" | "high_contrast">, custom?: unknown): ThemeState {
+  // Earlier versions stored a purple default; treat it as "the default accent".
+  const accent = !p.accent_color || p.accent_color.toLowerCase() === LEGACY_DEFAULT_ACCENT ? DEFAULT_ACCENT : p.accent_color;
   const attrs: Record<string, string> = {
     "data-theme": THEMES.some((t) => t.id === p.theme) ? p.theme : "liquid-glass",
-    "data-mode": "dark",
+    "data-mode": p.color_mode === "dark" ? "dark" : "light",
     "data-color-mode": p.color_mode,
     "data-bg": p.background_style,
     "data-sidebar-style": p.sidebar_style,
@@ -23,8 +25,8 @@ export function themeFromPrefs(p: Pick<Preferences, "theme" | "color_mode" | "ac
     "data-contrast": p.high_contrast ? "high" : "normal",
   };
   const style: Record<string, string> = {
-    "--accent": p.accent_color,
-    "--accent-fg": readableOn(p.accent_color),
+    "--accent": accent,
+    "--accent-fg": readableOn(accent),
     "--radius": RADIUS[p.border_radius] ?? RADIUS.lg!,
   };
   if (p.theme === "custom") {
@@ -46,8 +48,8 @@ export function themeFromPrefs(p: Pick<Preferences, "theme" | "color_mode" | "ac
 /** Resolves "system" colour mode in the browser. */
 export function resolveMode(colorMode: string): "light" | "dark" {
   if (colorMode === "light" || colorMode === "dark") return colorMode;
-  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches) return "light";
-  return "dark";
+  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
 }
 
 let appliedVars: string[] = [];

@@ -35,15 +35,26 @@ export interface ThemeDef {
   description: string;
   mode: "light" | "dark";
   vars: Record<string, string>;
+  /** Hand-tuned dark variant (otherwise a shared dark base is used). */
+  darkVars?: Record<string, string>;
   preview: [string, string, string];
 }
 
-/** Built-in themes: CSS variable sets. `--surface-a` is the glass panel alpha. */
+/** The product's default accent. */
+export const DEFAULT_ACCENT = "#2563eb";
+/** The accent stored by earlier versions as the default; treated as "use the default". */
+export const LEGACY_DEFAULT_ACCENT = "#7c8cff";
+
+/**
+ * Built-in themes: CSS variable sets. `--surface-a` is the card alpha (1 = solid).
+ * The id "liquid-glass" is kept for stored preferences; it is the default "Universal" theme.
+ */
 export const THEMES: ThemeDef[] = [
   {
-    id: "liquid-glass", label: "Liquid Glass", description: "Frosted translucent panels over a soft gradient.", mode: "dark",
-    preview: ["#0b1020", "#7c8cff", "#9be7ff"],
-    vars: { "--bg": "#0a0f1f", "--bg-2": "#141b36", "--surface": "255 255 255", "--surface-a": "0.07", "--fg": "#eef1ff", "--muted": "#9aa4c7", "--border-a": "0.12", "--glow-a": "#5b6cff", "--glow-b": "#22d3ee", "--blur": "22px" },
+    id: "liquid-glass", label: "Universal", description: "Bright blue and white. Calm, clear and the default.", mode: "light",
+    preview: ["#f8fafc", "#2563eb", "#eff6ff"],
+    vars: { "--bg": "#f8fafc", "--bg-2": "#f1f5f9", "--card": "#ffffff", "--surface": "255 255 255", "--surface-a": "1", "--fg": "#0f172a", "--muted": "#64748b", "--subtle": "#94a3b8", "--line": "15 23 42", "--border-a": "0.085", "--glow-a": "#dbeafe", "--glow-b": "#e0f2fe", "--blur": "18px" },
+    darkVars: { "--bg": "#0b1120", "--bg-2": "#0f172a", "--card": "#111a2e", "--surface": "17 26 46", "--surface-a": "1", "--fg": "#e6edf7", "--muted": "#94a3b8", "--subtle": "#64748b", "--line": "226 232 240", "--border-a": "0.09", "--glow-a": "#1e3a8a", "--glow-b": "#0c4a6e", "--blur": "18px" },
   },
   {
     id: "midnight", label: "Midnight", description: "Deep blue-black with calm contrast.", mode: "dark",
@@ -53,12 +64,12 @@ export const THEMES: ThemeDef[] = [
   {
     id: "amoled", label: "AMOLED Black", description: "True black for OLED screens, minimal effects.", mode: "dark",
     preview: ["#000000", "#ffffff", "#3b82f6"],
-    vars: { "--bg": "#000000", "--bg-2": "#000000", "--surface": "255 255 255", "--surface-a": "0.05", "--fg": "#f5f5f5", "--muted": "#8a8a8a", "--border-a": "0.16", "--glow-a": "#000000", "--glow-b": "#000000", "--blur": "0px" },
+    vars: { "--bg": "#000000", "--bg-2": "#0a0a0a", "--surface": "255 255 255", "--surface-a": "0.05", "--fg": "#f5f5f5", "--muted": "#8a8a8a", "--border-a": "0.16", "--glow-a": "#000000", "--glow-b": "#000000", "--blur": "0px" },
   },
   {
-    id: "minimal-light", label: "Minimal Light", description: "Clean, bright and quiet.", mode: "light",
-    preview: ["#f7f8fb", "#4f46e5", "#0ea5e9"],
-    vars: { "--bg": "#f6f7fb", "--bg-2": "#eef0f7", "--surface": "255 255 255", "--surface-a": "0.85", "--fg": "#0f172a", "--muted": "#5b6478", "--border-a": "0.9", "--glow-a": "#c7d2fe", "--glow-b": "#bae6fd", "--blur": "10px" },
+    id: "minimal-light", label: "Minimal Light", description: "Plain white, no tint, no effects.", mode: "light",
+    preview: ["#ffffff", "#0f172a", "#e5e7eb"],
+    vars: { "--bg": "#ffffff", "--bg-2": "#f4f4f5", "--card": "#ffffff", "--surface": "255 255 255", "--surface-a": "1", "--fg": "#09090b", "--muted": "#52525b", "--line": "9 9 11", "--border-a": "0.1", "--glow-a": "#ffffff", "--glow-b": "#ffffff", "--blur": "10px" },
   },
   {
     id: "aurora", label: "Aurora", description: "Northern-lights gradients with gentle glow.", mode: "dark",
@@ -67,7 +78,7 @@ export const THEMES: ThemeDef[] = [
   },
 ];
 
-export const RADIUS: Record<string, string> = { sm: "8px", md: "12px", lg: "18px", xl: "26px" };
+export const RADIUS: Record<string, string> = { sm: "8px", md: "12px", lg: "16px", xl: "22px" };
 export const ANIMATION: Record<string, { scale: string }> = { none: { scale: "0" }, subtle: { scale: "0.5" }, normal: { scale: "1" }, rich: { scale: "1.6" } };
 
 const rgb = (hexColor: string) => {
@@ -77,8 +88,9 @@ const rgb = (hexColor: string) => {
 
 /** Returns the CSS variables for a custom theme, built only from validated tokens. */
 export function customThemeVars(t: CustomTheme["tokens"]): { vars: Record<string, string>; mode: "light" | "dark" } {
-  const mode = t.mode ?? "dark";
-  const base = THEMES.find((x) => x.mode === mode)!.vars;
+  const mode = t.mode ?? "light";
+  const def = THEMES[0]!;
+  const base = mode === "light" ? def.vars : def.darkVars!;
   const vars: Record<string, string> = { ...base };
   if (t.background) vars["--bg"] = t.background;
   if (t.backgroundAlt) vars["--bg-2"] = t.backgroundAlt;
@@ -104,12 +116,12 @@ export function readableOn(hexColor: string): "#000000" | "#ffffff" {
 }
 
 /** Light-mode variable set: every built-in theme can render light (used when colour mode is "light" or the OS prefers light). */
-const LIGHT_BASE = THEMES.find((t) => t.id === "minimal-light")!.vars;
-const DARK_FALLBACK = THEMES.find((t) => t.id === "midnight")!.vars;
+const LIGHT_BASE = THEMES.find((t) => t.id === "liquid-glass")!.vars;
+const DARK_FALLBACK = THEMES.find((t) => t.id === "liquid-glass")!.darkVars!;
 
 function lightVariant(t: ThemeDef): Record<string, string> {
   if (t.mode === "light") return t.vars;
-  return { ...LIGHT_BASE, "--glow-a": t.id === "aurora" ? "#a7f3d0" : t.id === "midnight" ? "#bfdbfe" : "#c7d2fe", "--glow-b": t.id === "aurora" ? "#ddd6fe" : "#bae6fd" };
+  return { ...LIGHT_BASE, "--glow-a": t.id === "aurora" ? "#d1fae5" : t.id === "amoled" ? "#ffffff" : "#dbeafe", "--glow-b": t.id === "aurora" ? "#ede9fe" : t.id === "amoled" ? "#ffffff" : "#e0f2fe" };
 }
 
 const block = (selector: string, vars: Record<string, string>) =>
@@ -122,7 +134,7 @@ const block = (selector: string, vars: Record<string, string>) =>
 export function themeStylesheet(): string {
   const out: string[] = [];
   for (const t of THEMES) {
-    const dark = t.mode === "dark" ? t.vars : DARK_FALLBACK;
+    const dark = t.darkVars ?? (t.mode === "dark" ? t.vars : DARK_FALLBACK);
     out.push(block(`:root[data-theme="${t.id}"][data-mode="dark"]`, dark));
     out.push(block(`:root[data-theme="${t.id}"][data-mode="light"]`, lightVariant(t)));
   }
