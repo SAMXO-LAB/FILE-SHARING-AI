@@ -140,7 +140,7 @@ export async function safeFetch(rawUrl: string, opts: SafeFetchOptions = {}): Pr
         signal: controller.signal,
         dispatcher: (opts.dispatcher ?? agent) as never,
         headers: {
-          "user-agent": "UniversalAIMemoryBot/1.0 (+link preview; user-requested)",
+          "user-agent": "ShareFilesAIBot/1.0 (+link preview; user-requested)",
           accept: "text/html,text/plain;q=0.9,*/*;q=0.1",
         },
       });
