@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { safeNext } from "@/lib/security/redirect";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/setup", "/auth/callback"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/setup", "/auth/callback", "/welcome"];
 const isPublic = (p: string) => PUBLIC_PATHS.some((x) => p === x || p.startsWith(`${x}/`));
 
 function buildCsp(nonce: string): string {
@@ -69,6 +69,18 @@ export async function proxy(request: NextRequest) {
   const signedIn = Boolean(data?.claims?.sub);
 
   if (!pathname.startsWith("/api/") && pathname !== "/auth/callback") {
+    // Signed-out visitors to "/" see the public introduction (the URL stays "/").
+    if (!signedIn && pathname === "/") {
+      const rewrite = NextResponse.rewrite(new URL("/welcome", request.url), { request: { headers: requestHeaders } });
+      response.cookies.getAll().forEach((c) => rewrite.cookies.set(c));
+      rewrite.headers.set("content-security-policy", csp);
+      return rewrite;
+    }
+    if (signedIn && pathname === "/welcome") {
+      const redirect = NextResponse.redirect(new URL("/", request.url));
+      redirect.headers.set("content-security-policy", csp);
+      return redirect;
+    }
     if (!signedIn && !isPublic(pathname)) {
       const to = new URL("/login", request.url);
       if (pathname !== "/") to.searchParams.set("next", safeNext(pathname + request.nextUrl.search));

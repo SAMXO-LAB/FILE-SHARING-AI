@@ -42,6 +42,25 @@ try {
   page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource/.test(m.text())) problems.push(`[${where}] console: ${m.text().slice(0, 300)}`); });
   page.on("response", (r) => { if (r.status() >= 500) problems.push(`[${where}] ${r.status()} ${r.url()}`); });
 
+  // Public introduction for signed-out visitors at "/".
+  where = "landing";
+  await page.goto(`http://127.0.0.1:${APP}/`, { waitUntil: "networkidle" });
+  if (new URL(page.url()).pathname !== "/") problems.push(`[landing] "/" redirected to ${page.url()}`);
+  if (!(await page.getByRole("heading", { level: 1 }).filter({ hasText: "Ask your files" }).isVisible())) problems.push("[landing] hero heading missing");
+  for (const id of ["features", "how", "privacy", "faq"]) if (!(await page.locator(`#${id}`).count())) problems.push(`[landing] section #${id} missing`);
+  // Scroll through so every reveal animation runs, then check the footer credit.
+  for (let y = 0; y < 12000; y += 600) { await page.mouse.wheel(0, 600); await page.waitForTimeout(120); }
+  if (!(await page.getByText("Developed by").first().isVisible())) problems.push("[landing] footer credit missing");
+  if (!(await page.getByText("Chandrashekar").first().isVisible())) problems.push("[landing] developer name missing");
+  await page.screenshot({ path: SHOT("_landing"), fullPage: true });
+  const lm = await browser.newPage({ viewport: { width: 390, height: 800 } });
+  await lm.goto(`http://127.0.0.1:${APP}/`, { waitUntil: "networkidle" });
+  for (let y = 0; y < 14000; y += 500) { await lm.mouse.wheel(0, 500); await lm.waitForTimeout(80); }
+  const lOverflow = await lm.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  if (lOverflow > 1) problems.push(`[landing mobile] horizontal overflow of ${lOverflow}px`);
+  await lm.screenshot({ path: SHOT("_landing_mobile"), fullPage: true });
+  await lm.close();
+
   for (const p of PUBLIC) {
     where = p;
     await page.goto(`http://127.0.0.1:${APP}${p}`, { waitUntil: "networkidle" });
