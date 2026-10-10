@@ -15,7 +15,7 @@ export function Logo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2.5 font-semibold tracking-[-0.015em] ${className}`}>
       <LogoMark />
-      <span>Universal AI Memory</span>
+      <span>Share Files AI</span>
     </span>
   );
 }

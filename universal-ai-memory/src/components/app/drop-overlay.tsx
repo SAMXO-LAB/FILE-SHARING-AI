@@ -124,7 +124,7 @@ export function DropOverlay() {
     <div className="pointer-events-none fixed inset-0 z-[80] grid place-items-center bg-[color-mix(in_srgb,var(--bg)_55%,transparent)] p-6 backdrop-blur-[2px]" role="status" aria-live="polite">
       <div className={cn("animate-rise flex max-w-md flex-col items-center gap-3 rounded-[calc(var(--radius)*1.3)] border-2 border-dashed border-accent/45 bg-card px-10 py-11 text-center shadow-[var(--shadow-lg)] transition-opacity", (label || attach) && "opacity-90")}>
         <div className="grid h-14 w-14 place-items-center rounded-2xl bg-accent-soft text-accent"><UploadCloud className="h-7 w-7" strokeWidth={1.8} aria-hidden /></div>
-        <p className="text-[17px] font-semibold tracking-tight">{attach ? "Drop to attach to your question" : label ? `Drop to add to ${label}` : "Drop files to add them to your AI Memory."}</p>
+        <p className="text-[17px] font-semibold tracking-tight">{attach ? "Drop to attach to your question" : label ? `Drop to add to ${label}` : "Drop files to add them to Share Files AI."}</p>
         <p className="text-sm text-muted">{attach ? "Files are attached to the message. Nothing is sent until you press Send." : "Files, folders, links and text are all welcome."}</p>
       </div>
     </div>

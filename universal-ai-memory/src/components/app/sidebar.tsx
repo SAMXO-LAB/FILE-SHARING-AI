@@ -128,9 +128,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
     return (
       <div className="flex h-full flex-col">
         <div className={cn("flex h-16 shrink-0 items-center", c ? "justify-center" : "justify-between px-5")}>
-          <Link href="/" onClick={onMobileClose} aria-label="Universal AI Memory, home" className="flex min-w-0 items-center gap-2.5 rounded-lg">
+          <Link href="/" onClick={onMobileClose} aria-label="Share Files AI, home" className="flex min-w-0 items-center gap-2.5 rounded-lg">
             <LogoMark size="sm" />
-            {!c && <span className="truncate text-[15px] font-semibold tracking-[-0.015em]">Universal AI Memory</span>}
+            {!c && <span className="truncate text-[15px] font-semibold tracking-[-0.015em]">Share Files AI</span>}
           </Link>
           {isMobile && <Button size="icon-sm" variant="ghost" aria-label="Close menu" onClick={onMobileClose}><X className="h-4 w-4" /></Button>}
         </div>
