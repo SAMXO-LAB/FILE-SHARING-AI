@@ -379,7 +379,7 @@ function Footer() {
       <div className="border-t hairline">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-[13px] text-muted sm:flex-row sm:px-6">
           <p>© {year} Share Files AI</p>
-          <p className="flex items-center gap-1.5">Developed by <span className="font-semibold text-fg">Chandrashekar</span></p>
+          <p className="flex items-center gap-1.5">Developed by <span className="font-semibold text-fg">Chandra Shekar</span></p>
         </div>
       </div>
     </motion.footer>
