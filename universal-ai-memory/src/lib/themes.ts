@@ -47,11 +47,11 @@ export const LEGACY_DEFAULT_ACCENT = "#7c8cff";
 
 /**
  * Built-in themes: CSS variable sets. `--surface-a` is the card alpha (1 = solid).
- * The id "liquid-glass" is kept for stored preferences; it is the default "Universal" theme.
+ * The id "liquid-glass" is kept for stored preferences; it is the default blue-and-white theme.
  */
 export const THEMES: ThemeDef[] = [
   {
-    id: "liquid-glass", label: "Universal", description: "Bright blue and white. Calm, clear and the default.", mode: "light",
+    id: "liquid-glass", label: "Blue & White", description: "Bright blue and white. Calm, clear and the default.", mode: "light",
     preview: ["#f8fafc", "#2563eb", "#eff6ff"],
     vars: { "--bg": "#f8fafc", "--bg-2": "#f1f5f9", "--card": "#ffffff", "--surface": "255 255 255", "--surface-a": "1", "--fg": "#0f172a", "--muted": "#64748b", "--subtle": "#94a3b8", "--line": "15 23 42", "--border-a": "0.085", "--glow-a": "#dbeafe", "--glow-b": "#e0f2fe", "--blur": "18px" },
     darkVars: { "--bg": "#0b1120", "--bg-2": "#0f172a", "--card": "#111a2e", "--surface": "17 26 46", "--surface-a": "1", "--fg": "#e6edf7", "--muted": "#94a3b8", "--subtle": "#64748b", "--line": "226 232 240", "--border-a": "0.09", "--glow-a": "#1e3a8a", "--glow-b": "#0c4a6e", "--blur": "18px" },
