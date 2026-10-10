@@ -9,11 +9,13 @@ import {
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { HeroDemo } from "./hero-demo";
+import { DragDropShowcase, FriendsShowcase } from "./showcases";
 import { Item, LandingMotion, Reveal, Stagger, fadeUp, stagger } from "./motion";
 
 const NAV = [
   { href: "#features", label: "Features" },
   { href: "#how", label: "How it works" },
+  { href: "#friends", label: "Friends" },
   { href: "#privacy", label: "Privacy" },
   { href: "#faq", label: "FAQ" },
 ];
@@ -28,7 +30,9 @@ export function Landing() {
           <Hero />
           <Sources />
           <HowItWorks />
+          <DragDropShowcase />
           <Features />
+          <FriendsShowcase />
           <AskShowcase />
           <Privacy />
           <Faq />
@@ -114,7 +118,7 @@ function Hero() {
           <AuthLink href="/login" className="inline-flex h-12 items-center rounded-[12px] border hairline bg-card px-6 text-[15px] font-medium shadow-[var(--shadow-xs)] transition-colors hover:border-[rgb(var(--line)/0.18)]">Sign in</AuthLink>
         </motion.div>
         <motion.ul variants={fadeUp} className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[13.5px] text-muted">
-          {[{ i: Lock, t: "Private by default" }, { i: Quote, t: "Answers cite their sources" }, { i: MessageCircle, t: "WhatsApp & Telegram imports" }].map(({ i: I, t }) => (
+          {[{ i: Lock, t: "Private by default" }, { i: Quote, t: "Answers cite their sources" }, { i: UploadCloud, t: "Drag & drop any file" }, { i: Send, t: "Send to friends" }].map(({ i: I, t }) => (
             <li key={t} className="flex items-center gap-1.5"><I className="h-4 w-4 text-accent" aria-hidden />{t}</li>
           ))}
         </motion.ul>

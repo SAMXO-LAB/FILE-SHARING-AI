@@ -309,3 +309,11 @@ html[data-dragging] .friend-drop { outline: 1.5px dashed color-mix(in srgb, var(
 .chat-drop[data-drop-hover="true"] { outline: none !important; background: transparent !important; }
 .chat-drop[data-drop-hover="true"] .chat-bg { box-shadow: inset 0 0 0 2px var(--accent); background-color: color-mix(in srgb, var(--accent-soft) 70%, transparent); }
 .chat-bg { background-image: radial-gradient(rgb(var(--line) / 0.07) 1px, transparent 1px); background-size: 18px 18px; transition: background-color 150ms, box-shadow 150ms; }
+
+/* ---- Google button ------------------------------------------------------------------------ */
+.google-btn-glow { background: linear-gradient(100deg, rgb(66 133 244 / 0.07), rgb(234 67 53 / 0.06) 35%, rgb(251 188 5 / 0.07) 65%, rgb(52 168 83 / 0.07)); }
+.google-btn::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%); transform: translateX(-120%); }
+:root[data-mode="dark"] .google-btn::after { background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.08) 50%, transparent 65%); }
+.google-btn:hover::after { transition: transform 700ms var(--ease-out-soft); transform: translateX(120%); }
+.google-btn-ring { border: 2px solid transparent; border-top-color: #4285F4; border-right-color: #EA4335; border-bottom-color: #FBBC05; border-left-color: #34A853; animation: g-spin 0.9s linear infinite; }
+@keyframes g-spin { to { transform: rotate(360deg); } }
