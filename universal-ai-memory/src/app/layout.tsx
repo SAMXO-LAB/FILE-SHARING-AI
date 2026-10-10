@@ -9,7 +9,7 @@ import { themeStylesheet } from "@/lib/themes";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Universal AI Memory", template: "%s · Universal AI Memory" },
+  title: { default: "Share Files AI", template: "%s · Share Files AI" },
   description: "Ask anything about your files, chats, links and notes, and get answers with sources.",
   robots: { index: false, follow: false },
 };
