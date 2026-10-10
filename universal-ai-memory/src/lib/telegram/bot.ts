@@ -110,7 +110,7 @@ function pickAttachment(m: TgMessage): { ref: TgFileRef; name: string; mime: str
 }
 
 const HELP =
-  "I save what you send me into your Universal AI Memory.\n\n" +
+  "I save what you send me into your Share Files AI memory.\n\n" +
   "To link this chat: open Connected Apps → Telegram in the web app, create a link code, then send /start <code> here.\n\n" +
   "Commands: /status, /disconnect.\n\n" +
   "I can only see messages you send to me directly. I can't read your other chats or Secret Chats.";
