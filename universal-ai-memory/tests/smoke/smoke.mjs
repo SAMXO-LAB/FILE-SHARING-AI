@@ -104,7 +104,7 @@ try {
   await page.getByRole("dialog").waitFor({ timeout: 5000 }).catch(() => problems.push("[add dialog] did not open"));
   await page.keyboard.press("Escape");
 
-  // Ask AI with a TEST-ONLY response fixture (intercepted in the browser; the app never shows sample data).
+  // Ask Sam with a TEST-ONLY response fixture (intercepted in the browser; the app never shows sample data).
   where = "ask fixture";
   const card = (n, extra = {}) => ({ key: `file:f${n}`, type: "file", id: `0000000${n}-0000-4000-8000-000000000000`, section: "files", title: `Quarterly report ${n}.pdf`, typeLabel: "PDF", mime: "application/pdf", category: "document", sourceId: "upload", sourceLabel: "Uploaded", sender: null, senderVerified: false, date: "2026-10-09T10:00:00Z", dateKind: "uploaded", sizeBytes: 302000, status: "ready", statusDetail: null, description: null, url: null, conversationTitle: null, messageCount: null, relevance: 1, relevanceLabel: n === 1 ? "high" : "medium", passages: [{ recordId: `r${n}`, text: "Revenue grew 12% quarter over quarter, driven by the new subscription tier and lower churn in the enterprise segment.", page: 2, pageEnd: null, seqFrom: null, seqTo: null, matchedBy: ["text"] }], ...extra });
   const cards = [1, 2, 3, 4, 5, 6, 7].map((n) => card(n));

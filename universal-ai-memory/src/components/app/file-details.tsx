@@ -23,7 +23,7 @@ interface SharedView { file: Pick<FileRow, "id" | "display_name" | "mime_type" |
 type View = OwnerView | SharedView;
 const isShared = (v: View): v is SharedView => "shared" in v;
 
-const SOURCE: Record<string, string> = { upload: "Uploaded", whatsapp: "WhatsApp import", telegram: "Telegram", ai_chat: "Ask AI attachment" };
+const SOURCE: Record<string, string> = { upload: "Uploaded", whatsapp: "WhatsApp import", telegram: "Telegram", ai_chat: "Ask Sam attachment" };
 const INDEX_LABEL: Record<string, string> = { none: "Not indexed", metadata: "Name and metadata only", text: "Text searchable", semantic: "Text and meaning searchable" };
 
 function ExtractedText({ fileId }: { fileId: string }) {

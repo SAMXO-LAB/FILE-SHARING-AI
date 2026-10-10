@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AskView } from "./ask-view";
 
-export const metadata: Metadata = { title: "Ask AI" };
+export const metadata: Metadata = { title: "Ask Sam" };
 export default function AskPage() {
   return <Suspense><AskView /></Suspense>;
 }

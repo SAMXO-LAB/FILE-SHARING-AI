@@ -257,7 +257,7 @@ h1, h2, .font-display { font-family: var(--font-display); }
 @keyframes ai-shine { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
 @keyframes ai-pulse { 0% { box-shadow: 0 6px 18px -6px #2F8CFFcc, 0 0 0 0 color-mix(in srgb, #2F8CFF 45%, transparent); } 70%, 100% { box-shadow: 0 6px 18px -6px #2F8CFFcc, 0 0 0 10px transparent; } }
 
-/* AI orb used on the Ask AI empty state and the thinking indicator */
+/* AI orb used on the Ask Sam empty state and the thinking indicator */
 .ai-orb { position: relative; display: grid; place-items: center; border-radius: 9999px; isolation: isolate;
   background: radial-gradient(circle at 32% 28%, #ffffff 0%, #bfdbfe 18%, #2F8CFF 52%, #1E4FD8 78%, #0B1E4D 100%);
   box-shadow: 0 18px 50px -12px rgb(47 140 255 / 0.55), inset 0 -6px 14px rgb(11 30 77 / 0.35), inset 0 4px 10px rgb(255 255 255 / 0.5); }

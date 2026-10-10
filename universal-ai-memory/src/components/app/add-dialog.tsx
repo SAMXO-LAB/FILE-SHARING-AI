@@ -122,7 +122,7 @@ export function AddToMemoryProvider({ children }: { children: React.ReactNode })
     <Ctx.Provider value={value}>
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent title="Add to Memory" description="Everything you add is private to you and searchable with Ask AI." className="max-w-xl">
+        <DialogContent title="Add to Memory" description="Everything you add is private to you and searchable with Ask Sam." className="max-w-xl">
           <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
             <TabsList>
               <TabsTrigger value="files"><FileUp className="h-3.5 w-3.5" aria-hidden />Files</TabsTrigger>

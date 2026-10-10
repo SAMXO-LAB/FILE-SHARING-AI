@@ -257,9 +257,9 @@ function AskShowcase() {
     <section aria-labelledby="ask-h" className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div className="grid items-center gap-12 lg:grid-cols-2">
         <Reveal>
-          <p className="eyebrow">Ask AI</p>
-          <h2 id="ask-h" className="mt-2 text-[28px] font-semibold tracking-[-0.025em] sm:text-[34px]">Talk to your memory like you'd ask a friend</h2>
-          <p className="mt-3 text-[15.5px] leading-relaxed text-muted">Follow-ups understand what you just saw, so “the second PDF” or “that chat” just works. When something isn't in your files, it says so instead of making it up.</p>
+          <p className="eyebrow">Ask Sam</p>
+          <h2 id="ask-h" className="mt-2 text-[28px] font-semibold tracking-[-0.025em] sm:text-[34px]">Meet Sam. Ask like you'd ask a friend</h2>
+          <p className="mt-3 text-[15.5px] leading-relaxed text-muted">Sam is your built-in assistant. Follow-ups understand what you just saw, so “the second PDF” or “that chat” just works. When something isn't in your files, Sam says so instead of making it up.</p>
           <ul className="mt-6 space-y-3 text-[14.5px]">
             {["Answers come only from your own items", "Related files appear as cards you can open", "Save any answer as a note, or export the chat"].map((t) => (
               <li key={t} className="flex items-start gap-2.5"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden />{t}</li>

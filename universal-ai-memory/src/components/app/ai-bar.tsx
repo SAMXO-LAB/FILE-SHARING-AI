@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 /** Example questions cycled in the empty AI bar. */
 export const AI_PROMPTS = [
-  "Ask anything about your files, chats and links…",
+  "Ask Sam anything about your files, chats and links…",
   "Find the PDF about solar panels",
   "What did we decide about the trip budget?",
   "Show photos I saved last December",

@@ -20,7 +20,7 @@ type NavEntry = { href: string; label: string; icon: typeof House };
 export const NAV_GROUPS: { label?: string; items: NavEntry[] }[] = [
   { items: [
     { href: "/", label: "Home", icon: House },
-    { href: "/ask", label: "Ask AI", icon: Sparkles },
+    { href: "/ask", label: "Ask Sam", icon: Sparkles },
     { href: "/friends", label: "Send to Friends", icon: Send },
     { href: "/memory", label: "My Memory", icon: Brain },
   ] },

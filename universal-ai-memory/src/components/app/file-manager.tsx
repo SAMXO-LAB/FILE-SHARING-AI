@@ -262,7 +262,7 @@ export function FileManager({ title, description, categories, grid: gridDefault 
                 dropLabel={currentFolder ? `add them to ${currentFolder.name}` : "add them to memory"}
                 icon={Files}
                 title={<>{categories ? "Nothing here yet" : currentFolder ? "This folder is empty" : "No files yet"}: drop files here, or <span className="text-accent">browse</span></>}
-                hint="Any file type works. Everything is read and becomes searchable with Ask AI."
+                hint="Any file type works. Everything is read and becomes searchable with Ask Sam."
               />
           ) : layout === "grid" ? (
             <ul className="stagger-in grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

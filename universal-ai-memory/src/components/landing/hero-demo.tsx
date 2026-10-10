@@ -39,7 +39,7 @@ export function HeroDemo() {
         {/* window chrome */}
         <div className="flex items-center gap-1.5 border-b hairline bg-[rgb(var(--line)/0.025)] px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-[#fca5a5]" /><span className="h-2.5 w-2.5 rounded-full bg-[#fcd34d]" /><span className="h-2.5 w-2.5 rounded-full bg-[#86efac]" />
-          <span className="ml-3 text-[11px] font-medium text-subtle">Share Files AI · Ask AI</span>
+          <span className="ml-3 text-[11px] font-medium text-subtle">Share Files AI · Ask Sam</span>
         </div>
         <div className="space-y-4 p-4 sm:p-5">
           {/* question */}
@@ -66,7 +66,7 @@ export function HeroDemo() {
               {phase === "answer" && (
                 <motion.div key="a" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="space-y-3">
                   <div className="rounded-2xl border hairline p-3.5">
-                    <p className="mb-2 flex items-center gap-1.5 text-[11.5px] font-medium text-muted"><span className="grid h-5 w-5 place-items-center rounded-md bg-accent-soft"><Sparkles className="h-3 w-3 text-accent" aria-hidden /></span>Answer from your memory</p>
+                    <p className="mb-2 flex items-center gap-1.5 text-[11.5px] font-medium text-muted"><span className="grid h-5 w-5 place-items-center rounded-md bg-accent-soft"><Sparkles className="h-3 w-3 text-accent" aria-hidden /></span>Sam found this in your files</p>
                     <p className="text-[13.5px] leading-relaxed">
                       {ANSWER}
                       <Cite n={1} /> and hotel options shortlisted in the shared sheet<Cite n={2} />.
@@ -87,7 +87,7 @@ export function HeroDemo() {
 
           {/* composer */}
           <div className="flex items-center gap-2 rounded-2xl border hairline bg-card px-3 py-2 shadow-[var(--shadow-sm)]">
-            <span className="flex-1 truncate text-[12.5px] text-subtle">Ask anything about your digital life…</span>
+            <span className="flex-1 truncate text-[12.5px] text-subtle">Ask Sam anything…</span>
             <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent text-white"><ArrowUp className="h-3.5 w-3.5" aria-hidden /></span>
           </div>
         </div>

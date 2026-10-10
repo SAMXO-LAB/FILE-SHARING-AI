@@ -80,7 +80,7 @@ export function NotesPanel({ initialId }: { initialId: string | null }) {
           <Button size="icon" onClick={() => void create()} aria-label="New note"><Plus className="h-4 w-4" /></Button>
         </div>
         {list.loading ? <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-16" />)}</div> : notes.length === 0 ? (
-          <EmptyState icon={NotebookPen} title={dq ? "No matching notes" : "No notes yet"} className="py-8">{dq ? "Try different words." : "Notes you write (or save from an AI answer) are searchable with Ask AI."}</EmptyState>
+          <EmptyState icon={NotebookPen} title={dq ? "No matching notes" : "No notes yet"} className="py-8">{dq ? "Try different words." : "Notes you write (or save from an AI answer) are searchable with Ask Sam."}</EmptyState>
         ) : (
           <ul className="space-y-1.5" aria-label="Notes">
             {notes.map((n) => (

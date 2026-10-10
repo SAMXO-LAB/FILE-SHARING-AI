@@ -2,7 +2,7 @@ import { must, route } from "@/lib/api";
 import type { Citation } from "@/lib/retrieval/types";
 import { idParams } from "@/lib/validation";
 
-/** Markdown transcript of an Ask AI chat, including the sources each answer cited. */
+/** Markdown transcript of an Ask Sam chat, including the sources each answer cited. */
 export const GET = route<undefined, undefined, { id: string }>({ rateLimit: { name: "chat-export", max: 30, windowSeconds: 600 } }, async ({ supabase, user, params }) => {
   const { id } = idParams.parse(params);
   const { data: conv } = await supabase.from("ai_conversations").select("title,created_at").eq("id", id).eq("owner_id", user.id).maybeSingle();

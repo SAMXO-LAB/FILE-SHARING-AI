@@ -95,6 +95,6 @@ The default look is the **Blue & White** theme (stored id `liquid-glass`), light
 
 ## Known limitations
 
-- Answers in Ask AI keep short cited quotes in chat history until that chat is deleted (stated in Settings → Privacy).
+- Answers in Ask Sam keep short cited quotes in chat history until that chat is deleted (stated in Settings → Privacy).
 - The inline job kick after an upload is best-effort; durability comes from the queue and a worker/cron.
 - Sign-in events are held by Supabase Auth, so the in-app activity list doesn't show them.

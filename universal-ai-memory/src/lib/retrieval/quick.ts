@@ -18,7 +18,7 @@ export interface QuickSearchResult {
 }
 
 /**
- * Search without writing an answer: same hybrid retrieval and permission checks as Ask AI, but no
+ * Search without writing an answer: same hybrid retrieval and permission checks as Ask Sam, but no
  * language model is involved, so it works in every privacy mode. An empty query browses recent items.
  */
 export async function quickSearch(

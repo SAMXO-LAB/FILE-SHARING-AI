@@ -50,7 +50,7 @@ const DROP_TARGETS = [
   { icon: UploadCloud, label: "Anywhere on a page" },
   { icon: FolderOpen, label: "Onto a folder" },
   { icon: Layers, label: "Onto a collection" },
-  { icon: Sparkles, label: "Into Ask AI" },
+  { icon: Sparkles, label: "Into Ask Sam" },
   { icon: Users, label: "Onto a friend" },
   { icon: MessageSquareText, label: "Chat exports" },
 ];

@@ -49,7 +49,7 @@ export function PrivacyTab() {
     try { const r = await api<{ queued: number }>("/api/files/reindex-all", { body: {} }); toast.success(`Queued ${r.queued} file${r.queued === 1 ? "" : "s"}`); setChangedMode(false); } catch (e) { toast.error(errorMessage(e)); } finally { setReindexing(false); }
   }
   async function clearHistory() {
-    if (!(await confirm({ title: "Clear search history?", description: "Your saved searches are deleted. Chats in Ask AI are kept; delete those from the chat's menu.", confirmLabel: "Clear", danger: true }))) return;
+    if (!(await confirm({ title: "Clear search history?", description: "Your saved searches are deleted. Chats in Ask Sam are kept; delete those from the chat's menu.", confirmLabel: "Clear", danger: true }))) return;
     try { await api("/api/search/history", { method: "DELETE" }); toast.success("Search history cleared"); } catch (e) { toast.error(errorMessage(e)); }
   }
 
@@ -91,7 +91,7 @@ export function PrivacyTab() {
       <Section title="Search history">
         <ToggleRow id="hist" label="Remember my searches" description="Used for suggestions on the My Memory page. Turning this off stops saving new searches." checked={prefs.save_search_history} onChange={(v) => save({ save_search_history: v })} />
         <Row label="Delete saved searches"><Button size="sm" variant="danger-ghost" onClick={() => void clearHistory()}>Clear history</Button></Row>
-        <p className="flex gap-2 text-xs text-muted"><ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />Answers in Ask AI keep short quotes from the sources they cited, so you can reopen them later. They stay in that chat until you delete the chat.</p>
+        <p className="flex gap-2 text-xs text-muted"><ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />Answers in Ask Sam keep short quotes from the sources they cited, so you can reopen them later. They stay in that chat until you delete the chat.</p>
       </Section>
     </div>
   );

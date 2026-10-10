@@ -41,7 +41,7 @@ export const prefsPatch = z
   .strict();
 
 
-/** Filters a user can apply to Ask AI / search. */
+/** Filters a user can apply to Ask Sam / search. */
 export const filtersSchema = z
   .object({
     sourceIds: z.array(z.enum(["upload", "whatsapp", "telegram", "link", "note", "ai_chat"])).max(6).optional(),

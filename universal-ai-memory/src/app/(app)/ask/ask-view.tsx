@@ -40,7 +40,7 @@ const STARTERS = [
   { icon: Link2, title: "Saved links", q: "Show links I saved recently", hint: "Articles and pages you kept", tone: "from-cyan-400/15 to-cyan-500/5 text-cyan-700 dark:text-cyan-300" },
   { icon: Copy, title: "Tidy up", q: "Find duplicate files", hint: "Spot copies taking up space", tone: "from-violet-400/15 to-violet-500/5 text-violet-600 dark:text-violet-300" },
 ];
-const ASK_PROMPTS = ["Ask anything about your files, chats and links…", "Find the PDF about solar panels", "What did we decide in the project chat?", "Summarize the second one", "Show photos from my trip last month"];
+const ASK_PROMPTS = ["Ask Sam anything about your files, chats and links…", "Find the PDF about solar panels", "What did we decide in the project chat?", "Summarize the second one", "Show photos from my trip last month"];
 
 export function AskView() {
   const router = useRouter();
@@ -188,7 +188,7 @@ export function AskView() {
   return (
     <div className="mx-auto -mb-24 flex min-h-[calc(100dvh-4rem)] w-full max-w-[880px] flex-col lg:min-h-[calc(100dvh-2.5rem)]">
       <header className="mb-6 flex items-center gap-2 border-b hairline pb-4">
-        <h1 className="min-w-0 flex-1 truncate text-[20px] font-semibold tracking-[-0.02em]">{conversationId ? title : "Ask AI"}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-[20px] font-semibold tracking-[-0.02em]">{conversationId ? title : "Ask Sam"}</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button variant="glass" size="sm"><History className="h-4 w-4 text-muted" aria-hidden /><span className="hidden sm:inline">History</span></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="max-h-96 w-80 overflow-y-auto">
@@ -235,10 +235,10 @@ export function AskView() {
               <AiOrb size={76} />
             </motion.div>
             <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }} className="mt-7 text-[28px] font-semibold leading-tight tracking-[-0.035em] sm:text-[34px]">
-              Ask your memory <span className="text-gradient-brand">anything</span>
+              Ask Sam <span className="text-gradient-brand">anything</span>
             </motion.h2>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="mt-2 max-w-md text-[15px] leading-relaxed text-muted">
-              Plain language works best. Ask a question, then follow up with “summarize the second one”. Every answer shows where it came from.
+              Sam searches your files, chats, links and notes. Ask a question in plain language, then follow up with “summarize the second one”. Every answer shows where it came from.
             </motion.p>
             <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.25 } } }} className="mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-2">
               {STARTERS.map((st) => (

@@ -11,7 +11,7 @@ export const GET = route({ query }, async ({ supabase, user, query }) => {
   return { conversations: data ?? [] };
 });
 
-/** Clears all Ask AI chat history. */
+/** Clears all Ask Sam chat history. */
 export const DELETE = route({ rateLimit: { name: "chat-clear", max: 10, windowSeconds: 600 } }, async ({ supabase, user }) => {
   const { error } = await supabase.from("ai_conversations").delete().eq("owner_id", user.id);
   if (error) throw error;

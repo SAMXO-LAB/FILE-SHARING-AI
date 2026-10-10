@@ -84,7 +84,7 @@ export function DropOverlay() {
       void (async () => {
         try {
           const dropped = await readDataTransfer(dt);
-          // Attachment zones (e.g. the Ask AI composer) only receive the files; nothing is sent or shared
+          // Attachment zones (e.g. the Ask Sam composer) only receive the files; nothing is sent or shared
           // until the user presses Send there.
           if (t.attach && t.el) {
             if (dropped.files.length) t.el.dispatchEvent(new CustomEvent("memory:attach-files", { detail: dropped.files }));

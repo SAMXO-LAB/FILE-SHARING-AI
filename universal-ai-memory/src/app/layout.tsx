@@ -13,7 +13,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Share Files AI", template: "%s · Share Files AI" },
-  description: "Send smarter. Share securely. Store and share any file, then ask AI about your files, chats, links and notes, with sources.",
+  description: "Send smarter. Share securely. Store and share any file, then ask Sam about your files, chats, links and notes, with sources.",
   robots: { index: false, follow: false },
 };
 

@@ -132,7 +132,7 @@ function SearchTab() {
                   <ul className="stagger-in grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{s.cardKeys.map((k) => byKey.get(k)).filter((c): c is ContentCard => Boolean(c)).map((c) => <li key={c.key}><ResultCard card={c} /></li>)}</ul>
                 </section>
               ))}
-              {committed && <p className="text-center text-sm text-muted">Want a written answer? <Link href={`/ask?q=${encodeURIComponent(committed)}`} className="text-accent underline">Ask AI about “{committed}”</Link></p>}
+              {committed && <p className="text-center text-sm text-muted">Want a written answer? <Link href={`/ask?q=${encodeURIComponent(committed)}`} className="text-accent underline">Ask Sam about “{committed}”</Link></p>}
             </div>
           )}
       </div>
