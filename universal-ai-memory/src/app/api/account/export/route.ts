@@ -45,7 +45,7 @@ export const GET = route({ rateLimit: { name: "account-export", max: 3, windowSe
   }
   if (truncated.length) out.truncatedTables = truncated;
   await audit(user.id, "account.exported", { type: "profile", id: user.id });
-  const name = `memory-export-${new Date().toISOString().slice(0, 10)}.json`;
+  const name = `share-files-ai-export-${new Date().toISOString().slice(0, 10)}.json`;
   return new Response(JSON.stringify(out, null, 2), {
     headers: { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${name}"`, "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" },
   });
