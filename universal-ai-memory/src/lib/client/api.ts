@@ -13,13 +13,25 @@ interface ApiInit {
   signal?: AbortSignal;
 }
 
+/**
+ * The account this tab was rendered for. Sent with every request so the server can refuse to answer
+ * for a different account (e.g. someone signed into another account in a second tab, which replaces
+ * the shared session cookie). When that happens the tab reloads into the account that's signed in.
+ */
+let expectedAccount: string | null = null;
+let reloading = false;
+export function setExpectedAccount(id: string | null) { expectedAccount = id; }
+
 /** Fetch wrapper for our JSON API: throws ApiClientError with a user-presentable message. */
 export async function api<T = unknown>(url: string, init: ApiInit = {}): Promise<T> {
   let res: Response;
+  const headers: Record<string, string> = {};
+  if (init.body !== undefined) headers["Content-Type"] = "application/json";
+  if (expectedAccount) headers["X-Account-Id"] = expectedAccount;
   try {
     res = await fetch(url, {
       method: init.method ?? (init.body !== undefined ? "POST" : "GET"),
-      headers: init.body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      headers,
       body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
       signal: init.signal,
       credentials: "same-origin",
@@ -36,6 +48,10 @@ export async function api<T = unknown>(url: string, init: ApiInit = {}): Promise
       window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
     }
     const err = (data as { error?: { code?: string; message?: string; details?: unknown } } | null)?.error;
+    if (err?.code === "account_changed" && typeof window !== "undefined" && !reloading) {
+      reloading = true;
+      setTimeout(() => window.location.reload(), 1500);
+    }
     throw new ApiClientError(err?.message ?? `Request failed (${res.status}).`, res.status, err?.code ?? "error", err?.details);
   }
   return data as T;

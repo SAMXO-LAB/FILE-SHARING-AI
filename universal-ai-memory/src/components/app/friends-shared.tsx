@@ -19,7 +19,7 @@ export interface FriendEntry {
   kind: "friend" | "incoming" | "outgoing" | "blocked";
   since: string;
   user: FriendUser;
-  lastMessage: { at: string; mine: boolean; text: string } | null;
+  lastMessage: { id: string; at: string; mine: boolean; read: boolean; file: string | null; text: string } | null;
   unread: number;
 }
 export interface FriendsResponse { friends: FriendEntry[]; totals: { unread: number; incoming: number } }

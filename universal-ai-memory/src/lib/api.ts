@@ -137,6 +137,12 @@ export function route<B = undefined, Q = undefined, P = Record<string, string>>(
         const { data, error } = await supabase.auth.getUser();
         if (error || !data.user) throw errors.unauthorized();
         user = data.user;
+        // The tab says which account it was rendered for; if the session now belongs to someone else
+        // (another account signed in elsewhere in this browser), don't mix their data into this page.
+        const expected = req.headers.get("x-account-id");
+        if (expected && expected !== user.id) {
+          throw new ApiError(409, "account_changed", "You signed in to a different account in another tab. Reloading this page…");
+        }
       }
 
       if (opts.rateLimit) {

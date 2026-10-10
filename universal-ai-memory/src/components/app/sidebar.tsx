@@ -14,6 +14,7 @@ import { useAddToMemory } from "./add-dialog";
 import { useApp } from "./app-context";
 import { Logo, LogoMark } from "@/components/brand/logo";
 import { useUploads } from "./upload-context";
+import { FRIENDS_TOTALS } from "./friend-notifier";
 
 type NavEntry = { href: string; label: string; icon: typeof House };
 /** Grouped so the long list scans easily; order and destinations are unchanged. */
@@ -40,16 +41,13 @@ export const NAV_GROUPS: { label?: string; items: NavEntry[] }[] = [
 ];
 export const NAV = NAV_GROUPS.flatMap((g) => g.items);
 
-/** Unread messages + incoming friend requests, refreshed every 30 seconds and after changes. */
+/** Unread messages + incoming friend requests, published by the FriendNotifier's polling. */
 function useFriendBadge(): number {
   const [n, setN] = useState(0);
   useEffect(() => {
-    let alive = true;
-    const load = () => api<{ totals: { unread: number; incoming: number } }>("/api/friends").then((r) => { if (alive) setN(r.totals.unread + r.totals.incoming); }).catch(() => {});
-    void load();
-    const t = setInterval(load, 30_000);
-    window.addEventListener("memory:friends-changed", load);
-    return () => { alive = false; clearInterval(t); window.removeEventListener("memory:friends-changed", load); };
+    const h = (e: Event) => { const t = (e as CustomEvent<{ unread: number; incoming: number }>).detail; setN(t.unread + t.incoming); };
+    window.addEventListener(FRIENDS_TOTALS, h);
+    return () => window.removeEventListener(FRIENDS_TOTALS, h);
   }, []);
   return n;
 }

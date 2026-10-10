@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogProvider } from "@/components/ui/confirm";
@@ -8,6 +8,7 @@ import { AddToMemoryProvider, useAddToMemory } from "./add-dialog";
 import { useApp } from "./app-context";
 import { DropOverlay } from "./drop-overlay";
 import { ImportWatcher } from "./import-watcher";
+import { FriendNotifier } from "./friend-notifier";
 import { Logo } from "@/components/brand/logo";
 import { Sidebar, SIDEBAR_W } from "./sidebar";
 import { UploadProvider } from "./upload-context";
@@ -35,6 +36,7 @@ function Frame({ children }: { children: React.ReactNode }) {
       </main>
       <DropOverlay />
       <ImportWatcher />
+      <Suspense><FriendNotifier /></Suspense>
       <UploadTray />
     </div>
   );

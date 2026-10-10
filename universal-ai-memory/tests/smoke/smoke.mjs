@@ -81,6 +81,14 @@ try {
   await page.getByRole("button", { name: /sign in|log in/i }).click();
   await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 15000 }).catch(() => problems.push("[sign-in] did not leave /login"));
 
+  // A tab rendered for one account must not get another account's data (second account signed in elsewhere).
+  where = "account-guard";
+  const guard = await page.evaluate(async () => {
+    const r = await fetch("/api/friends", { headers: { "X-Account-Id": "00000000-0000-4000-8000-000000000000" } });
+    return { status: r.status, code: (await r.json().catch(() => ({})))?.error?.code };
+  });
+  if (guard.status !== 409 || guard.code !== "account_changed") problems.push(`[account-guard] expected 409 account_changed, got ${guard.status} ${guard.code}`);
+
   for (const p of PAGES) {
     where = p;
     const resp = await page.goto(`http://127.0.0.1:${APP}${p}`, { waitUntil: "networkidle" });

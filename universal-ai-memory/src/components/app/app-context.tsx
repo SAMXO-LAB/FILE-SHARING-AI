@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { api } from "@/lib/client/api";
+import { api, setExpectedAccount } from "@/lib/client/api";
 import { applyThemeToDom, themeFromPrefs } from "@/lib/theme-state";
 import type { Capabilities } from "@/lib/env";
 import type { Preferences, Profile } from "@/lib/types";
@@ -29,6 +29,7 @@ export function useApp() {
 
 export function AppProvider({ profile: p0, email, prefs: pr0, caps, customTokens: c0, children }: { profile: Profile; email: string | null; prefs: Preferences; caps: Capabilities; customTokens: unknown; children: React.ReactNode }) {
   const [profile, setProfile] = useState(p0);
+  setExpectedAccount(profile.id); // plain module assignment; must be set before children start fetching
   const [prefs, setPrefs] = useState(pr0);
   const [customTokens, setCustomTokens] = useState<unknown>(c0);
 

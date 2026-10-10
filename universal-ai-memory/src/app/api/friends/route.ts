@@ -41,7 +41,7 @@ export const GET = route({}, async ({ supabase, user }) => {
       kind,
       since: f.responded_at ?? f.created_at,
       user: other ?? { id: otherParty(f, me), username: "unknown", displayName: null, avatar: null },
-      lastMessage: lm ? { at: lm.created_at, mine: lm.sender_id === me, text: lm.body ?? (lm.file_name ? `📎 ${lm.file_name}` : "") } : null,
+      lastMessage: lm ? { id: lm.id, at: lm.created_at, mine: lm.sender_id === me, read: Boolean(lm.read_at), file: lm.file_name ?? null, text: lm.body ?? (lm.file_name ? `📎 ${lm.file_name}` : "") } : null,
       unread: unread.get(f.id) ?? 0,
     };
   });

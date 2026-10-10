@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Ban, Check, CheckCheck, Copy, Download, Eye, FolderOpen, Loader2, MoreHorizontal, Paperclip, Plus, Radio, Send, ShieldOff,
+  ArrowLeft, Ban, BellOff, BellRing, Check, CheckCheck, Copy, Download, Eye, FolderOpen, Loader2, MoreHorizontal, Paperclip, Plus, Radio, Send, ShieldOff,
   UploadCloud, UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/misc";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/overlay";
 import { api, errorMessage, useFetch } from "@/lib/client/api";
+import { desktopState, enableDesktopNotifications, getNotifySettings, NOTIFY_CHANGED, playPing, setNotifySettings, showDesktop, type DesktopState } from "@/lib/client/notify";
 import { canShareFiles, shareFilesOut, shareStoredFileOut } from "@/lib/client/share-out";
 import { humanSize } from "@/lib/files/types";
 import { cn, formatDate, timeAgo } from "@/lib/utils";
@@ -40,6 +41,16 @@ export function FriendsView() {
   const reloadList = list.reload;
   const uploads = useUploads();
   const [pending, setPending] = useState<Pending[]>([]);
+  const entriesRef = useRef<FriendEntry[]>([]);
+  useEffect(() => { entriesRef.current = list.data?.friends ?? []; }, [list.data]);
+  /** Confirms a delivered file: pop-up, chime, and a system notification if you've switched tabs. */
+  const announceSent = useCallback((friendshipId: string, fileName: string) => {
+    const f = entriesRef.current.find((e) => e.id === friendshipId);
+    const who = f ? friendName(f.user) : "your friend";
+    if (getNotifySettings().popups) toast.success(`Sent to ${who}`, { description: fileName });
+    showDesktop(`Sent to ${who} ✓`, fileName, { tag: `sent-${friendshipId}` });
+    playPing("send");
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => void reloadList(), 10_000);
@@ -58,12 +69,13 @@ export function FriendsView() {
       uploads.add([file], {
         onUploaded: (fileId) => {
           void sendToFriend(friendshipId, [fileId])
+            .then(() => announceSent(friendshipId, file.name))
             .catch((e) => toast.error(`Couldn't send ${file.name}`, { description: errorMessage(e) }))
             .finally(() => setPending((p) => p.filter((x) => x.key !== key)));
         },
       });
     }
-  }, [uploads]);
+  }, [uploads, announceSent]);
 
   // Files already in memory come back as "duplicate": send the existing copy instead. Failures are reported.
   useEffect(() => {
@@ -74,12 +86,12 @@ export function FriendsView() {
       setPending((all) => all.filter((x) => x.key !== p.key));
       if (it.status === "duplicate" && it.duplicateOf) {
         uploads.dismiss(it.id);
-        void sendToFriend(p.friendshipId, [it.duplicateOf.id]).catch((e) => toast.error(`Couldn't send ${p.name}`, { description: errorMessage(e) }));
+        void sendToFriend(p.friendshipId, [it.duplicateOf.id]).then(() => announceSent(p.friendshipId, p.name)).catch((e) => toast.error(`Couldn't send ${p.name}`, { description: errorMessage(e) }));
       } else if (it.status === "failed") {
         toast.error(`Couldn't upload ${p.name}`, { description: it.error });
       }
     }
-  }, [uploads, pending]);
+  }, [uploads, pending, announceSent]);
 
   const open = (id: string | null) => router.replace(id ? `/friends?f=${id}` : "/friends", { scroll: false });
   const entries = list.data?.friends ?? [];
@@ -144,7 +156,7 @@ function FriendList({ entries, loading, error, selected, onOpen, onDropFiles }: 
     <>
       <div className="border-b hairline p-4">
         <div className="flex items-center justify-between gap-2">
-          <h1 className="text-[22px] font-semibold tracking-[-0.025em]">Friends</h1>
+          <h1 className="flex items-center gap-1.5 text-[22px] font-semibold tracking-[-0.025em]">Friends<NotifyBell /></h1>
           <button
             type="button"
             onClick={() => { void navigator.clipboard?.writeText(profile.username).then(() => toast.success("Username copied. Send it to a friend so they can add you.")); }}
@@ -248,6 +260,36 @@ function FriendRow({ f, active, onOpen, onDropFiles }: { f: FriendEntry; active:
         </span>
       </button>
     </li>
+  );
+}
+
+/** Turns friend notifications on/off for this device and asks the browser for permission. */
+function NotifyBell() {
+  const [state, setState] = useState<{ on: boolean; perm: DesktopState }>({ on: true, perm: "default" });
+  useEffect(() => {
+    const read = () => { const s = getNotifySettings(); setState({ on: s.popups || s.desktop, perm: desktopState() }); };
+    read();
+    window.addEventListener(NOTIFY_CHANGED, read);
+    return () => window.removeEventListener(NOTIFY_CHANGED, read);
+  }, []);
+  async function click() {
+    if (state.perm === "default") {
+      const r = await enableDesktopNotifications();
+      setNotifySettings({ popups: true });
+      toast.success(r === "granted" ? "Notifications on" : "Notifications on in the app", { description: r === "granted" ? "You'll be notified about new files and messages, even in another tab." : "Your browser blocked system notifications; you'll still see pop-ups here." });
+      return;
+    }
+    const on = !state.on;
+    setNotifySettings({ popups: on, desktop: on, sound: on });
+    toast(on ? "Notifications on" : "Notifications off", { description: on ? (state.perm === "denied" ? "System notifications are blocked in your browser settings; pop-ups are on." : "New files and messages will notify you.") : "You can turn them back on any time." });
+  }
+  const off = !state.on;
+  return (
+    <motion.button type="button" whileTap={{ scale: 0.88 }} onClick={() => void click()} aria-label={off ? "Turn on notifications" : state.perm === "default" ? "Allow notifications" : "Turn off notifications"} title={off ? "Notifications are off" : state.perm === "default" ? "Get notified about new files" : "Notifications are on"}
+      className={cn("relative grid h-8 w-8 place-items-center rounded-full transition-colors", off ? "text-subtle hover:bg-[rgb(var(--line)/0.05)]" : "text-accent hover:bg-accent-soft")}>
+      {off ? <BellOff className="h-[18px] w-[18px]" /> : <motion.span animate={state.perm === "default" ? { rotate: [0, -16, 14, -8, 0] } : {}} transition={{ duration: 0.9, repeat: Infinity, repeatDelay: 2.5 }}><BellRing className="h-[18px] w-[18px]" /></motion.span>}
+      {state.perm === "default" && !off && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-[var(--card)]" />}
+    </motion.button>
   );
 }
 
