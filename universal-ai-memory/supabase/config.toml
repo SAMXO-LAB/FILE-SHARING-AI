@@ -1,5 +1,5 @@
 # Minimal Supabase CLI config for local development (`supabase start`).
-project_id = "universal-ai-memory"
+project_id = "share-files-ai"
 
 [api]
 enabled = true
