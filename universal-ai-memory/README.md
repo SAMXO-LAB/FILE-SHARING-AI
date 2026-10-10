@@ -1,4 +1,4 @@
-# Universal AI Memory
+# Share Files AI
 
 Put your files, links, notes and chat exports in one private place, then ask questions about them in plain language. Answers come with sources, and everything shown (files, messages, links) is a real item from your own memory.
 
