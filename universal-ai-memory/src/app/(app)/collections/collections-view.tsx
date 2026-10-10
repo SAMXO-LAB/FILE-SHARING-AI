@@ -50,7 +50,7 @@ export function CollectionsView() {
             Collections are your own groupings, like “Tax documents 2026” or “Trip to Lisbon”. Nothing is moved: an item can be in several collections.
           </EmptyState>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {cols.map((c) => (
               <li key={c.id} data-drop-collection={c.id} data-drop-label={c.name} className="glass relative p-4 card-hover data-[drop-hover=true]:ring-2 data-[drop-hover=true]:ring-accent">
                 <div className="flex items-start gap-3">

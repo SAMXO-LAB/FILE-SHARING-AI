@@ -2,7 +2,7 @@ import { z } from "zod";
 import crypto from "node:crypto";
 import { ApiError, errors, route } from "@/lib/api";
 import { limits, publicEnv } from "@/lib/env";
-import { extensionOf, isBlockedExtension, sanitizeFileName, typeFromName } from "@/lib/files/types";
+import { extensionOf, sanitizeFileName, typeFromName } from "@/lib/files/types";
 import { adminOrThrow, audit } from "@/lib/server/context";
 
 const body = z.object({
@@ -22,7 +22,6 @@ export const POST = route(
   async ({ body, supabase, user }) => {
     const admin = adminOrThrow();
     const name = sanitizeFileName(body.name);
-    if (isBlockedExtension(name)) throw errors.badRequest("Executable and script-launcher files aren't accepted.");
 
     let cap = limits.maxUploadBytes;
     if (body.purpose === "import_source") {

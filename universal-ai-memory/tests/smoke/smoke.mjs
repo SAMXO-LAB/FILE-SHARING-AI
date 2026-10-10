@@ -27,7 +27,7 @@ async function waitFor(url) {
 }
 
 const PUBLIC = ["/login", "/signup", "/forgot-password"];
-const PAGES = ["/", "/ask", "/memory", "/memory?q=test", "/files", "/documents", "/media", "/links", "/conversations", "/collections", "/integrations", "/uploads",
+const PAGES = ["/", "/ask", "/friends", "/memory", "/memory?q=test", "/files", "/documents", "/media", "/links", "/conversations", "/collections", "/integrations", "/uploads",
   "/settings?tab=account", "/settings?tab=appearance", "/settings?tab=privacy", "/settings?tab=storage", "/settings?tab=ai", "/settings?tab=notifications"];
 
 const problems = [];

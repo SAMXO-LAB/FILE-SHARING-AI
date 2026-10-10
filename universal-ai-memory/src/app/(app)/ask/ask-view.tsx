@@ -2,14 +2,16 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUp, Download, History, Loader2, MessageSquarePlus, MoreHorizontal, Paperclip, Pencil, Sparkles, Trash2, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowUpRight, Copy, Download, FileSearch, History, Link2, ListChecks, Loader2, MessageSquarePlus, MessagesSquare, MoreHorizontal, Paperclip, Pencil, ShieldCheck, Quote, Trash2, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/components/app/app-context";
+import { AiBar, AiOrb, AiSendButton, AiThinking, CyclingPlaceholder } from "@/components/app/ai-bar";
 import { AssistantBlock, type ChatMessage, type Structured } from "@/components/app/answer-block";
 import { useUploads } from "@/components/app/upload-context";
 import { Button } from "@/components/ui/button";
 import { useDialogs } from "@/components/ui/confirm";
-import { Badge, EmptyState, Skeleton } from "@/components/ui/misc";
+import { Badge, Skeleton } from "@/components/ui/misc";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/overlay";
 import { api, errorMessage, useFetch } from "@/lib/client/api";
 import type { ContentCard } from "@/lib/retrieval/types";
@@ -32,7 +34,13 @@ function friendlyError(e: unknown): string {
   return msg;
 }
 
-const STARTERS = ["What did I add recently?", "Find my PDFs", "Show links I saved recently", "Find duplicate files"];
+const STARTERS = [
+  { icon: FileSearch, title: "Find a file", q: "Find my PDFs", hint: "By topic, type, date or who sent it", tone: "from-[#2F8CFF]/15 to-[#1E4FD8]/5 text-[#1E4FD8] dark:text-[#7fb2ff]" },
+  { icon: ListChecks, title: "Catch up", q: "What did I add recently?", hint: "A quick summary of what's new", tone: "from-emerald-400/15 to-emerald-500/5 text-emerald-600 dark:text-emerald-300" },
+  { icon: Link2, title: "Saved links", q: "Show links I saved recently", hint: "Articles and pages you kept", tone: "from-cyan-400/15 to-cyan-500/5 text-cyan-700 dark:text-cyan-300" },
+  { icon: Copy, title: "Tidy up", q: "Find duplicate files", hint: "Spot copies taking up space", tone: "from-violet-400/15 to-violet-500/5 text-violet-600 dark:text-violet-300" },
+];
+const ASK_PROMPTS = ["Ask anything about your files, chats and links…", "Find the PDF about solar panels", "What did we decide in the project chat?", "Summarize the second one", "Show photos from my trip last month"];
 
 export function AskView() {
   const router = useRouter();
@@ -222,28 +230,56 @@ export function AskView() {
       <div className="flex-1 space-y-8 pb-6" aria-live="polite">
         {loadingChat && <div className="space-y-3"><Skeleton className="ml-auto h-12 w-2/3" /><Skeleton className="h-40" /></div>}
         {empty && (
-          <div className="space-y-6 pt-6 sm:pt-10">
-            <EmptyState icon={Sparkles} title="Ask about anything you've saved">
-              Ask in plain language: “find the PDF about solar panels”, “what did we decide in the project chat last month?”, then follow up with “summarize the second one”. Answers cite where they came from.
-            </EmptyState>
-            <div className="flex flex-wrap justify-center gap-2">{STARTERS.map((s) => <button key={s} onClick={() => void send(s)} className="inline-flex h-8 items-center rounded-full border hairline bg-card px-3.5 text-[13px] text-muted shadow-[var(--shadow-xs)] transition-colors hover:border-accent/30 hover:text-accent">{s}</button>)}</div>
-            {!caps.ai && <p className="text-center text-xs text-muted">No AI provider is configured on this server: you'll see matching passages and files instead of written answers.</p>}
-            {caps.ai && (prefs.processing_mode === "metadata_only" || prefs.processing_mode === "extraction") && <p className="text-center text-xs text-muted">Your privacy mode keeps content away from AI providers, so answers list matching passages. <Link href="/settings?tab=privacy" className="underline">Change this</Link></p>}
+          <div className="flex flex-col items-center pt-4 text-center sm:pt-10">
+            <motion.div initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 18 }}>
+              <AiOrb size={76} />
+            </motion.div>
+            <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }} className="mt-7 text-[28px] font-semibold leading-tight tracking-[-0.035em] sm:text-[34px]">
+              Ask your memory <span className="text-gradient-brand">anything</span>
+            </motion.h2>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="mt-2 max-w-md text-[15px] leading-relaxed text-muted">
+              Plain language works best. Ask a question, then follow up with “summarize the second one”. Every answer shows where it came from.
+            </motion.p>
+            <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.25 } } }} className="mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-2">
+              {STARTERS.map((st) => (
+                <motion.button
+                  key={st.q}
+                  variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.2, 0.8, 0.2, 1] } } }}
+                  whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => void send(st.q)}
+                  className="group relative flex items-start gap-3 overflow-hidden rounded-[calc(var(--radius)*1.05)] border hairline bg-card p-4 text-left shadow-[var(--shadow-xs)] transition-[border-color,box-shadow] duration-200 hover:border-accent/35 hover:shadow-[var(--shadow-md)]"
+                >
+                  <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br", st.tone)}><st.icon className="h-5 w-5" strokeWidth={1.9} aria-hidden /></span>
+                  <span className="min-w-0">
+                    <span className="block text-[14.5px] font-semibold tracking-[-0.01em]">{st.title}</span>
+                    <span className="mt-0.5 block text-[13px] text-muted">“{st.q}”</span>
+                    <span className="mt-1 block text-[12px] text-subtle">{st.hint}</span>
+                  </span>
+                  <ArrowUpRight className="absolute right-3 top-3 h-4 w-4 text-subtle opacity-0 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent group-hover:opacity-100" aria-hidden />
+                </motion.button>
+              ))}
+            </motion.div>
+            <motion.ul initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[12.5px] text-muted">
+              <li className="flex items-center gap-1.5"><Quote className="h-3.5 w-3.5 text-accent" aria-hidden />Answers cite sources</li>
+              <li className="flex items-center gap-1.5"><MessagesSquare className="h-3.5 w-3.5 text-accent" aria-hidden />Follow-up questions</li>
+              <li className="flex items-center gap-1.5"><UploadCloud className="h-3.5 w-3.5 text-accent" aria-hidden />Drop files to ask about them</li>
+              <li className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-accent" aria-hidden />Private to you</li>
+            </motion.ul>
+            {!caps.ai && <p className="mt-5 text-center text-xs text-muted">No AI provider is configured on this server: you'll see matching passages and files instead of written answers.</p>}
+            {caps.ai && (prefs.processing_mode === "metadata_only" || prefs.processing_mode === "extraction") && <p className="mt-5 text-center text-xs text-muted">Your privacy mode keeps content away from AI providers, so answers list matching passages. <Link href="/settings?tab=privacy" className="underline">Change this</Link></p>}
           </div>
         )}
         {messages.map((m, i) => m.role === "user" ? (
-          <div key={m.id} className="animate-rise flex flex-col items-end gap-1.5">
+          <motion.div key={m.id} initial={{ opacity: 0, y: 10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", stiffness: 380, damping: 30 }} className="flex origin-bottom-right flex-col items-end gap-1.5">
             <div className="bubble bubble-user max-w-[min(85%,640px)] whitespace-pre-wrap break-words text-[15px] leading-relaxed">{m.content}</div>
             {m.attachments && m.attachments.length > 0 && <div className="flex flex-wrap justify-end gap-1.5">{m.attachments.map((a) => <Badge key={a.id}><Paperclip className="h-3 w-3" aria-hidden />{a.name}</Badge>)}</div>}
-          </div>
+          </motion.div>
         ) : m.error ? (
           <div key={m.id} role="alert" className="card flex flex-wrap items-center gap-3 border-danger/25 bg-danger/5 p-4 text-sm"><span className="flex-1 text-danger">{m.error}</span>{m.question && <Button size="sm" variant="glass" onClick={() => { setMessages((x) => x.filter((y) => y.id !== m.id && y.id !== m.failedUserId)); void send(m.question!); }}>Try again</Button>}</div>
         ) : (
           <AssistantBlock key={m.id} m={m} onAsk={(t) => void send(t)} onRefine={(kind) => void send(lastUserQuestion(i), { dropped: [kind] })} onRetry={() => void send(lastUserQuestion(i))} />
         ))}
-        {busy && (
-          <div className="flex items-center gap-3 px-1 text-sm text-muted" role="status"><span className="grid h-7 w-7 place-items-center rounded-lg bg-accent-soft"><Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden /></span>Searching your memory…</div>
-        )}
+        {busy && <AiThinking />}
         <div ref={endRef} />
       </div>
 
@@ -253,33 +289,35 @@ export function AskView() {
         onSubmit={(e) => { e.preventDefault(); void send(input); }}
         className="sticky bottom-0 z-10 -mx-2 mt-2 bg-gradient-to-t from-bg from-70% to-transparent px-2 pb-[max(1rem,env(safe-area-inset-bottom))] pt-6"
       >
-        <div data-drop-attach data-drop-label="your question" className="focus-ring rounded-[calc(var(--radius)*1.25)] border hairline bg-card p-2 shadow-[var(--shadow-md)] transition-[border-color,box-shadow] duration-150 data-[drop-hover=true]:!bg-accent-soft">
+        <AiBar busy={busy} data-drop-attach data-drop-label="attach them to your question" innerClassName="p-2 shadow-[var(--shadow-md)]">
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-2 pb-2 pt-1">
               {attachments.map((a) => (
-                <span key={a.id} className={cn("inline-flex max-w-full items-center gap-1.5 rounded-lg border py-1 pl-2.5 pr-1 text-xs", a.state === "failed" ? "border-danger/30 bg-danger/5 text-danger" : "hairline bg-[rgb(var(--line)/0.03)] text-fg")} title={a.error}>
-                  {(a.state === "uploading" || a.state === "processing") && <Loader2 className="h-3 w-3 animate-spin" aria-hidden />}
+                <motion.span layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} key={a.id} className={cn("inline-flex max-w-full items-center gap-1.5 rounded-lg border py-1 pl-2.5 pr-1 text-xs", a.state === "failed" ? "border-danger/30 bg-danger/5 text-danger" : "hairline bg-[rgb(var(--line)/0.03)] text-fg")} title={a.error}>
+                  {(a.state === "uploading" || a.state === "processing") ? <Loader2 className="h-3 w-3 animate-spin text-accent" aria-hidden /> : <Paperclip className="h-3 w-3 text-muted" aria-hidden />}
                   {a.name}{a.state === "processing" && " · reading…"}{a.state === "failed" && " · unreadable"}
                   <button type="button" onClick={() => setAttachments((x) => x.filter((y) => y.id !== a.id))} className="grid h-4 w-4 place-items-center rounded-full hover:bg-[rgb(var(--line)/0.2)]" aria-label={`Remove ${a.name}`}><X className="h-3 w-3" /></button>
-                </span>
+                </motion.span>
               ))}
             </div>
           )}
           <div className="flex items-end gap-1">
             <input ref={fileRef} type="file" multiple className="sr-only" onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
-            <Button type="button" variant="ghost" size="icon" className="text-muted hover:text-fg" aria-label="Attach a file" onClick={() => fileRef.current?.click()} disabled={attachments.length >= 4}><Paperclip className="h-[18px] w-[18px]" /></Button>
+            <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-muted hover:text-accent" aria-label="Attach a file (or drop one here)" title="Attach files, or drag and drop them here" onClick={() => fileRef.current?.click()} disabled={attachments.length >= 4}><Paperclip className="h-[18px] w-[18px]" /></Button>
             <label htmlFor="ask-input" className="sr-only">Your question</label>
-            <textarea
-              id="ask-input" ref={taRef} value={input} rows={1} maxLength={4000}
-              onChange={(e) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`; }}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); if (!blocked) void send(input); } }}
-              placeholder={attachments.length ? "Ask about the attached file…" : "Ask anything about your digital life..."}
-              className="max-h-44 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[15px] leading-6 outline-none placeholder:text-subtle focus-visible:outline-none"
-            />
-            <Button type="submit" size="icon" className="rounded-[11px]" aria-label="Send" disabled={!input.trim() || busy || blocked}>{busy ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.2} />}</Button>
+            <span className="relative flex min-w-0 flex-1">
+              <CyclingPlaceholder show={!input} prompts={attachments.length ? ["Ask about the attached file…", "Summarize this file", "What are the key dates in it?"] : ASK_PROMPTS} className="items-start px-1.5 py-2 text-[15px] leading-6" />
+              <textarea
+                id="ask-input" ref={taRef} value={input} rows={1} maxLength={4000}
+                onChange={(e) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`; }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); if (!blocked) void send(input); } }}
+                className="relative max-h-44 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[15px] leading-6 outline-none focus-visible:outline-none"
+              />
+            </span>
+            <AiSendButton ready={!!input.trim() && !blocked} busy={busy} />
           </div>
-        </div>
-        <p className="mt-2 text-center text-[11.5px] text-subtle">{blocked ? "Waiting for attachments to finish reading…" : "Answers can be wrong. Check the sources before relying on them."}</p>
+        </AiBar>
+        <p className="mt-2 text-center text-[11.5px] text-subtle">{blocked ? "Waiting for attachments to finish reading…" : "Drop files here to ask about them. Answers can be wrong, so check the sources."}</p>
       </form>
     </div>
   );

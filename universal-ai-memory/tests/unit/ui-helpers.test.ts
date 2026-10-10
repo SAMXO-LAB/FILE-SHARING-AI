@@ -98,3 +98,19 @@ describe("timeAgo", () => {
     expect(timeAgo("not a date")).toBe("");
   });
 });
+
+import { AVATARS, defaultAvatarFor, isKnownAvatarValue, resolveAvatar } from "@/lib/avatars";
+describe("built-in avatars", () => {
+  it("accepts only known avatar ids", () => {
+    expect(isKnownAvatarValue(`avatar:${AVATARS[0]!.id}`)).toBe(true);
+    expect(isKnownAvatarValue("avatar:not-a-real-one")).toBe(false);
+    expect(isKnownAvatarValue("https://evil.example/x.png")).toBe(false);
+    expect(isKnownAvatarValue("avatar:../../x")).toBe(false);
+  });
+  it("gives every user a stable default", () => {
+    expect(defaultAvatarFor("user-1").id).toBe(defaultAvatarFor("user-1").id);
+    expect(resolveAvatar(null, "user-1").id).toBe(defaultAvatarFor("user-1").id);
+    expect(resolveAvatar(`avatar:${AVATARS[3]!.id}`, "user-1").id).toBe(AVATARS[3]!.id);
+    expect(new Set(AVATARS.map((a) => a.id)).size).toBe(AVATARS.length);
+  });
+});

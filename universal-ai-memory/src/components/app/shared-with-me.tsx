@@ -1,6 +1,7 @@
 "use client";
 import { Check, Clock, X } from "lucide-react";
 import { toast } from "sonner";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge, EmptyState, Skeleton } from "@/components/ui/misc";
 import { api, errorMessage, useFetch } from "@/lib/client/api";
@@ -9,7 +10,7 @@ import { formatDate } from "@/lib/utils";
 import { Users } from "lucide-react";
 import { TypeIcon } from "./file-visuals";
 
-interface Share { id: string; status: string; canDownload: boolean; note: string | null; expiresAt: string | null; createdAt: string; file: { id: string; name: string; category: string; mime: string | null; size: number; trashed: boolean } | null; otherParty: { username: string } | null }
+interface Share { id: string; status: string; canDownload: boolean; note: string | null; expiresAt: string | null; createdAt: string; file: { id: string; name: string; category: string; mime: string | null; size: number; trashed: boolean } | null; otherParty: { id?: string; username: string; avatar?: string | null } | null }
 
 export function SharedWithMe({ onOpen }: { onOpen: (fileId: string) => void }) {
   const q = useFetch<{ shares: Share[] }>("/api/shares?direction=received");
@@ -30,7 +31,7 @@ export function SharedWithMe({ onOpen }: { onOpen: (fileId: string) => void }) {
           <TypeIcon category={s.file?.category} mime={s.file?.mime} />
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{s.file?.name ?? "File no longer available"}</p>
-            <p className="text-xs text-muted">From @{s.otherParty?.username ?? "unknown"} · {s.file ? humanSize(s.file.size) : ""}{s.expiresAt ? ` · ${s.status === "expired" ? "expired" : "until"} ${formatDate(s.expiresAt)}` : ""}{!s.canDownload && " · view only"}</p>
+            <p className="flex flex-wrap items-center gap-1 text-xs text-muted"><Avatar value={s.otherParty?.avatar} seed={s.otherParty?.id ?? s.otherParty?.username ?? s.id} size={16} />From @{s.otherParty?.username ?? "unknown"} · {s.file ? humanSize(s.file.size) : ""}{s.expiresAt ? ` · ${s.status === "expired" ? "expired" : "until"} ${formatDate(s.expiresAt)}` : ""}{!s.canDownload && " · view only"}</p>
             {s.note && <p className="mt-1 text-sm text-muted">“{s.note}”</p>}
           </div>
           {s.status === "pending" && <div className="flex gap-2"><Button size="sm" onClick={() => void respond(s.id, "accept")}><Check className="h-4 w-4" aria-hidden />Accept</Button><Button size="sm" variant="ghost" onClick={() => void respond(s.id, "decline")}><X className="h-4 w-4" aria-hidden />Decline</Button></div>}

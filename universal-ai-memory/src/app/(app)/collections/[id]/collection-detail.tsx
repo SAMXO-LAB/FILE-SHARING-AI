@@ -6,12 +6,15 @@ import { ArrowLeft, Download, Layers, Loader2, MessageSquare, MoreHorizontal, Pe
 import { toast } from "sonner";
 import { AssistantBlock, type ChatMessage, type Structured } from "@/components/app/answer-block";
 import { ResultCard } from "@/components/app/result-card";
+import { useUploads } from "@/components/app/upload-context";
 import { Button } from "@/components/ui/button";
+import { DropZone } from "@/components/ui/drop-zone";
 import { useDialogs } from "@/components/ui/confirm";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/misc";
 import { Dialog, DialogContent, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/overlay";
 import { api, errorMessage, useFetch } from "@/lib/client/api";
+import { addToCollection } from "@/lib/client/ingest";
 import type { AskResult, ContentCard } from "@/lib/retrieval/types";
 
 interface Detail { collection: { id: string; name: string; description: string | null; color: string | null }; cards: ContentCard[]; itemCount: number }
@@ -20,6 +23,7 @@ export function CollectionDetail({ id }: { id: string }) {
   const router = useRouter();
   const { confirm } = useDialogs();
   const detail = useFetch<Detail>(`/api/collections/${id}`);
+  const uploads = useUploads();
   const reload = detail.reload;
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
@@ -64,8 +68,13 @@ export function CollectionDetail({ id }: { id: string }) {
   if (detail.loading) return <div className="space-y-3"><Skeleton className="h-10 w-1/2" /><Skeleton className="h-32" /></div>;
   if (detail.error || !c) return <ErrorState message={detail.error ?? "This collection doesn't exist."} onRetry={reload} />;
 
+  const addFiles = (files: File[]) => {
+    uploads.add(files, { onUploaded: (fileId) => void addToCollection(id, "file", fileId) });
+    toast(`Uploading ${files.length} file${files.length === 1 ? "" : "s"} to ${c.name}`);
+  };
+
   return (
-    <div>
+    <div data-drop-collection={id} data-drop-label={c.name} data-drop-quiet>
       <Link href="/collections" className="mb-3 inline-flex items-center gap-1 text-sm text-muted hover:text-fg"><ArrowLeft className="h-4 w-4" aria-hidden />Collections</Link>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
@@ -97,10 +106,18 @@ export function CollectionDetail({ id }: { id: string }) {
         </section>
       )}
 
+      <DropZone
+        compact={cards.length > 0}
+        className="mb-5"
+        onFiles={addFiles}
+        dropLabel={`add them to ${c.name}`}
+        title={cards.length ? <>Drop files here to add them to this collection, or <span className="text-accent">browse</span></> : undefined}
+        hint={cards.length ? "Links and text dropped anywhere on this page are added too." : "Files you drop here are saved to your memory and added to this collection. You can also use the Collection button on any file, link or answer."}
+      />
       {cards.length === 0 ? (
-        <EmptyState icon={Layers} title="This collection is empty">Add items with the Collection button on a file or link, from an answer, or by dragging files from your computer onto this collection's card in the Collections list.</EmptyState>
+        <EmptyState icon={Layers} title="This collection is empty">Drop files above, or add items with the Collection button on a file or link.</EmptyState>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="stagger-in grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {cards.map((card) => (
             <li key={card.key} className="relative">
               <ResultCard card={card} />

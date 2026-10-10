@@ -9,10 +9,10 @@ import { useUploads } from "./upload-context";
 
 const INTERNAL = "application/x-memory-item";
 
-function targetOf(el: EventTarget | null): { target: DropTarget; label: string | null; el: Element | null; attach?: boolean } {
+function targetOf(el: EventTarget | null): { target: DropTarget; label: string | null; el: Element | null; attach?: boolean; local?: boolean } {
   const zone = (el as Element | null)?.closest?.("[data-drop-folder],[data-drop-collection],[data-drop-attach]") ?? null;
   if (!zone) return { target: {}, label: null, el: null };
-  if (zone.hasAttribute("data-drop-attach")) return { target: {}, label: zone.getAttribute("data-drop-label"), el: zone, attach: true };
+  if (zone.hasAttribute("data-drop-attach")) return { target: {}, label: zone.getAttribute("data-drop-label"), el: zone, attach: true, local: zone.hasAttribute("data-drop-local") };
   const folder = zone.getAttribute("data-drop-folder");
   const collection = zone.getAttribute("data-drop-collection");
   return { target: { folderId: folder === "root" ? null : folder, collectionId: collection }, label: zone.getAttribute("data-drop-label"), el: zone };
@@ -27,6 +27,8 @@ export function DropOverlay() {
   const [active, setActive] = useState(false);
   const [label, setLabel] = useState<string | null>(null);
   const [attach, setAttach] = useState(false);
+  /** Hovering a visible in-page drop zone, or a dialog is open: the zones highlight themselves instead. */
+  const [quiet, setQuiet] = useState(false);
   const depth = useRef(0);
   const hovered = useRef<Element | null>(null);
   const addRef = useRef(uploads.add);
@@ -44,7 +46,7 @@ export function DropOverlay() {
       el?.setAttribute("data-drop-hover", "true");
       hovered.current = el;
     };
-    const reset = () => { depth.current = 0; setActive(false); setLabel(null); setAttach(false); setHover(null); document.documentElement.removeAttribute("data-dragging"); };
+    const reset = () => { depth.current = 0; setActive(false); setLabel(null); setAttach(false); setQuiet(false); setHover(null); document.documentElement.removeAttribute("data-dragging"); };
 
     const onEnter = (e: DragEvent) => {
       if (!relevant(e)) return;
@@ -61,6 +63,7 @@ export function DropOverlay() {
       setHover(t.el);
       setLabel(t.label);
       setAttach(Boolean(t.attach));
+      setQuiet(Boolean(t.local) || Boolean(document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')));
     };
     const onLeave = (e: DragEvent) => {
       if (!relevant(e)) return;
@@ -73,6 +76,11 @@ export function DropOverlay() {
       const t = targetOf(e.target);
       const dt = e.dataTransfer;
       reset();
+      // With a dialog open, only its own drop zones accept files; a stray drop shouldn't upload behind it.
+      if (!t.el && document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) {
+        if (dt.types.includes("Files")) toast("Drop onto the highlighted area", { description: "Or close this window to add files from anywhere on the page." });
+        return;
+      }
       void (async () => {
         try {
           const dropped = await readDataTransfer(dt);
@@ -119,12 +127,12 @@ export function DropOverlay() {
     };
   }, []);
 
-  if (!active) return null;
+  if (!active || quiet) return null;
   return (
     <div className="pointer-events-none fixed inset-0 z-[80] grid place-items-center bg-[color-mix(in_srgb,var(--bg)_55%,transparent)] p-6 backdrop-blur-[2px]" role="status" aria-live="polite">
       <div className={cn("animate-rise flex max-w-md flex-col items-center gap-3 rounded-[calc(var(--radius)*1.3)] border-2 border-dashed border-accent/45 bg-card px-10 py-11 text-center shadow-[var(--shadow-lg)] transition-opacity", (label || attach) && "opacity-90")}>
         <div className="grid h-14 w-14 place-items-center rounded-2xl bg-accent-soft text-accent"><UploadCloud className="h-7 w-7" strokeWidth={1.8} aria-hidden /></div>
-        <p className="text-[17px] font-semibold tracking-tight">{attach ? "Drop to attach to your question" : label ? `Drop to add to ${label}` : "Drop files to add them to Share Files AI."}</p>
+        <p className="text-[17px] font-semibold tracking-tight">{attach ? `Drop to ${label ?? "attach these files"}` : label ? `Drop to add to ${label}` : "Drop files to add them to Share Files AI."}</p>
         <p className="text-sm text-muted">{attach ? "Files are attached to the message. Nothing is sent until you press Send." : "Files, folders, links and text are all welcome."}</p>
       </div>
     </div>

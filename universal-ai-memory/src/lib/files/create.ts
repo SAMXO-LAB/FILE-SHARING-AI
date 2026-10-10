@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { limits } from "@/lib/env";
 import { finalizeUpload } from "@/lib/files/finalize";
-import { isBlockedExtension, sanitizeFileName, typeFromName } from "@/lib/files/types";
+import { sanitizeFileName, typeFromName } from "@/lib/files/types";
 import { uploadBytes, BUCKET } from "@/lib/storage/objects";
 import type { FileRow } from "@/lib/types";
 
@@ -27,7 +27,6 @@ export type CreateFileResult =
 /** Server-side file creation for imports and bot messages: same quota, sniffing and queueing as browser uploads. */
 export async function createFileFromBytes(admin: SupabaseClient, input: CreateFileInput): Promise<CreateFileResult> {
   const name = sanitizeFileName(input.name);
-  if (isBlockedExtension(name)) return { ok: false, reason: "blocked", message: `${name}: executable files aren't accepted.` };
   const info = typeFromName(name, input.declaredMime);
   const id = crypto.randomUUID();
 

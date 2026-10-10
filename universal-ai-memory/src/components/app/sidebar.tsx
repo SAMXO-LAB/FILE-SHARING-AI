@@ -1,16 +1,18 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { Brain, ChevronsLeft, ChevronsRight, ChevronsUpDown, FileText, Files, House, ImageIcon, Layers, Link2, LogOut, MessagesSquare, Moon, Plug, Plus, Settings, Sparkles, Sun, UploadCloud, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { Brain, ChevronsLeft, ChevronsRight, ChevronsUpDown, FileText, Files, House, ImageIcon, Layers, Link2, LogOut, MessagesSquare, Moon, Plug, Plus, Send, Settings, Sparkles, Sun, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Tooltip } from "@/components/ui/overlay";
 import { api, errorMessage } from "@/lib/client/api";
 import { cn } from "@/lib/utils";
 import { useAddToMemory } from "./add-dialog";
 import { useApp } from "./app-context";
-import { LogoMark } from "./auth-shell";
+import { Logo, LogoMark } from "@/components/brand/logo";
 import { useUploads } from "./upload-context";
 
 type NavEntry = { href: string; label: string; icon: typeof House };
@@ -19,6 +21,7 @@ export const NAV_GROUPS: { label?: string; items: NavEntry[] }[] = [
   { items: [
     { href: "/", label: "Home", icon: House },
     { href: "/ask", label: "Ask AI", icon: Sparkles },
+    { href: "/friends", label: "Send to Friends", icon: Send },
     { href: "/memory", label: "My Memory", icon: Brain },
   ] },
   { label: "Library", items: [
@@ -37,11 +40,26 @@ export const NAV_GROUPS: { label?: string; items: NavEntry[] }[] = [
 ];
 export const NAV = NAV_GROUPS.flatMap((g) => g.items);
 
+/** Unread messages + incoming friend requests, refreshed every 30 seconds and after changes. */
+function useFriendBadge(): number {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const load = () => api<{ totals: { unread: number; incoming: number } }>("/api/friends").then((r) => { if (alive) setN(r.totals.unread + r.totals.incoming); }).catch(() => {});
+    void load();
+    const t = setInterval(load, 30_000);
+    window.addEventListener("memory:friends-changed", load);
+    return () => { alive = false; clearInterval(t); window.removeEventListener("memory:friends-changed", load); };
+  }, []);
+  return n;
+}
+
 const isActive = (path: string, href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`));
 
-export function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+export function NavList({ collapsed, onNavigate, pillId = "nav" }: { collapsed: boolean; onNavigate?: () => void; pillId?: string }) {
   const path = usePathname();
   const { activeCount } = useUploads();
+  const friends = useFriendBadge();
   return (
     <nav aria-label="Main" className="flex flex-col gap-4">
       {NAV_GROUPS.map((group, gi) => (
@@ -58,8 +76,16 @@ export function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavig
                 aria-label={collapsed ? label : undefined}
                 className={cn("nav-item relative flex h-9 items-center gap-3 rounded-[10px] px-3 text-[14px]", collapsed && "justify-center px-0")}
               >
-                <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden />
-                {!collapsed && <span className="truncate">{label}</span>}
+                {active && (
+                  <motion.span layoutId={`${pillId}-pill`} className="nav-pill absolute inset-0 rounded-[10px]" transition={{ type: "spring", stiffness: 420, damping: 34 }} aria-hidden>
+                    <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />
+                  </motion.span>
+                )}
+                <Icon className="nav-icon relative h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden />
+                {!collapsed && <span className="relative truncate">{label}</span>}
+                {href === "/friends" && friends > 0 && (
+                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className={cn("relative grid min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-semibold leading-5 text-accent-fg", collapsed ? "absolute right-1 top-0.5" : "ml-auto")} aria-label={`${friends} new`}>{friends > 99 ? "99+" : friends}</motion.span>
+                )}
                 {href === "/uploads" && activeCount > 0 && (
                   <span className={cn("grid min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-semibold leading-5 text-accent-fg", collapsed ? "absolute right-1 top-0.5" : "ml-auto")} aria-label={`${activeCount} uploading`}>{activeCount}</span>
                 )}
@@ -77,7 +103,6 @@ export function UserMenu({ collapsed }: { collapsed?: boolean }) {
   const { profile, email, prefs, updatePrefs } = useApp();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const initials = (profile.display_name || profile.username).slice(0, 2).toUpperCase();
   const dark = typeof document !== "undefined" ? document.documentElement.getAttribute("data-mode") === "dark" : prefs.color_mode === "dark";
   async function signOut() {
     setBusy(true);
@@ -94,7 +119,7 @@ export function UserMenu({ collapsed }: { collapsed?: boolean }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className={cn("group flex w-full items-center gap-3 rounded-[12px] p-2 text-left transition-colors hover:bg-[rgb(var(--line)/0.045)]", collapsed && "justify-center")} aria-label="Account menu">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-accent/15 bg-accent-soft text-[12px] font-semibold text-accent">{initials}</span>
+          <Avatar value={profile.avatar_url} seed={profile.id} size={36} className="ring-2 ring-[var(--card)] shadow-[var(--shadow-sm)] transition-transform duration-200 group-hover:scale-105" />
           {!collapsed && (
             <>
               <span className="min-w-0 flex-1"><span className="block truncate text-[13.5px] font-medium leading-5">{profile.display_name || profile.username}</span><span className="block truncate text-xs text-muted">@{profile.username}</span></span>
@@ -129,8 +154,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
       <div className="flex h-full flex-col">
         <div className={cn("flex h-16 shrink-0 items-center", c ? "justify-center" : "justify-between px-5")}>
           <Link href="/" onClick={onMobileClose} aria-label="Share Files AI, home" className="flex min-w-0 items-center gap-2.5 rounded-lg">
-            <LogoMark size="sm" />
-            {!c && <span className="truncate text-[15px] font-semibold tracking-[-0.015em]">Share Files AI</span>}
+            {c ? <LogoMark size={30} /> : <Logo size="sm" />}
           </Link>
           {isMobile && <Button size="icon-sm" variant="ghost" aria-label="Close menu" onClick={onMobileClose}><X className="h-4 w-4" /></Button>}
         </div>
@@ -141,7 +165,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
             <Button onClick={() => { openAdd(); onMobileClose(); }} className="h-10 w-full gap-2"><Plus className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden />Add to Memory</Button>
           )}
         </div>
-        <div className={cn("no-scrollbar min-h-0 flex-1 overflow-y-auto pb-4", c ? "px-3" : "px-3")}><NavList collapsed={c} onNavigate={onMobileClose} /></div>
+        <div className={cn("no-scrollbar min-h-0 flex-1 overflow-y-auto pb-4", c ? "px-3" : "px-3")}><NavList collapsed={c} onNavigate={onMobileClose} pillId={isMobile ? "m" : "d"} /></div>
         <div className={cn("shrink-0 space-y-0.5 border-t hairline p-3")}>
           <UserMenu collapsed={c} />
           {!isMobile && (

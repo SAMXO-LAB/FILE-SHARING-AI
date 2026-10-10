@@ -4,7 +4,7 @@ import { enrichDocument, type Enrichment } from "@/lib/ai/enrich";
 import { loadPolicy, type Policy } from "@/lib/ai/policy";
 import { clamavConfigured, limits } from "@/lib/env";
 import { scanStream } from "@/lib/security/clamav";
-import { categoryFromMime, typeFromName } from "@/lib/files/types";
+import { categoryFromMime, isProgramFile, PROGRAM_FILE_NOTE, typeFromName } from "@/lib/files/types";
 import { BUCKET, downloadObject, hashObject, removeObjects, signedUrl } from "@/lib/storage/objects";
 import type { FileRow } from "@/lib/types";
 import { chunkPages, type TextPage } from "./chunk";
@@ -16,10 +16,16 @@ import { ocrImage, transcribeAudio, visionSupported } from "./media";
 /** Chooses an extractor from the VERIFIED mime type (never from the client's claim). */
 export function extractKindFor(mime: string | null, name: string): ExtractKind | null {
   const m = (mime ?? "").toLowerCase();
+  // Programs and macro-enabled documents are never parsed, whatever they claim to be.
+  if (isProgramFile(name)) return null;
   if (m === "application/pdf") return "pdf";
   if (m.includes("wordprocessingml")) return "docx";
   if (m.includes("spreadsheetml")) return "xlsx";
   if (m.includes("presentationml")) return "pptx";
+  if (m.startsWith("application/vnd.oasis.opendocument.")) return "odf";
+  if (m === "application/epub+zip") return "epub";
+  if (m === "application/rtf" || m === "text/rtf") return "rtf";
+  if (m === "message/rfc822") return "text";
   if (m === "text/html") return "html";
   if (m === "application/json") return "json";
   if (m === "text/csv" || m === "text/tab-separated-values") return "csv";
@@ -60,6 +66,7 @@ export async function processFile(admin: SupabaseClient, fileId: string): Promis
   await setFile(admin, file.id, { status: "processing" });
   const policy = await loadPolicy(admin, file.owner_id);
   const notes: string[] = [];
+  if (isProgramFile(file.display_name) || file.status_detail === PROGRAM_FILE_NOTE) notes.push(PROGRAM_FILE_NOTE);
 
   // ---- 0. Malware scan (when a ClamAV server is configured; fails closed) ---------------------
   if (clamavConfigured()) {

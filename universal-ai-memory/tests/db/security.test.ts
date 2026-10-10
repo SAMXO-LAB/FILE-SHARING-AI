@@ -297,3 +297,28 @@ describe("job queue", () => {
     await expect(db.asUser(alice, (q) => q("select public.enqueue_job($1,'process_file')", [alice]))).rejects.toThrow(/permission denied/);
   });
 });
+
+describe("friends and direct messages", () => {
+  it("only the two people can see a friendship and its messages; nobody can write directly", async () => {
+    const a = await db.createUser("friend_a");
+    const b = await db.createUser("friend_b");
+    const c = await db.createUser("friend_c");
+    const { rows } = await db.admin.query("insert into public.friendships (requester_id, addressee_id, status) values ($1,$2,'accepted') returning id", [a, b]);
+    const fid = rows[0].id as string;
+    await db.admin.query("insert into public.direct_messages (friendship_id, sender_id, recipient_id, body) values ($1,$2,$3,'hello')", [fid, a, b]);
+
+    const count = async (u: string, sql: string) => (await db.asUser(u, (q) => q(sql))).rowCount;
+    expect(await count(a, "select id from public.friendships")).toBe(1);
+    expect(await count(b, "select id from public.friendships")).toBe(1);
+    expect(await count(c, "select id from public.friendships")).toBe(0);
+    expect(await count(b, "select id from public.direct_messages")).toBe(1);
+    expect(await count(c, "select id from public.direct_messages")).toBe(0);
+
+    // Writes only go through the server (service role).
+    await expect(db.asUser(c, (q) => q("insert into public.direct_messages (friendship_id, sender_id, recipient_id, body) values ($1,$2,$3,'spoof')", [fid, c, b]))).rejects.toThrow();
+    await expect(db.asUser(b, (q) => q("update public.friendships set status='blocked' where id=$1", [fid]))).rejects.toThrow();
+
+    // One row per pair, in either direction.
+    await expect(db.admin.query("insert into public.friendships (requester_id, addressee_id) values ($1,$2)", [b, a])).rejects.toThrow(/friendships_pair_unique/);
+  });
+});

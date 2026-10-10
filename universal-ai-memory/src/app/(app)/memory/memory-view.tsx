@@ -129,7 +129,7 @@ function SearchTab() {
               {(result?.sections.length ? result.sections : [{ key: "all", label: "", cardKeys: cards.map((c) => c.key) }]).map((s) => (
                 <section key={s.key} aria-label={s.label || "Results"}>
                   {s.label && <h2 className="mb-2 text-sm font-semibold text-muted">{s.label}</h2>}
-                  <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{s.cardKeys.map((k) => byKey.get(k)).filter((c): c is ContentCard => Boolean(c)).map((c) => <li key={c.key}><ResultCard card={c} /></li>)}</ul>
+                  <ul className="stagger-in grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{s.cardKeys.map((k) => byKey.get(k)).filter((c): c is ContentCard => Boolean(c)).map((c) => <li key={c.key}><ResultCard card={c} /></li>)}</ul>
                 </section>
               ))}
               {committed && <p className="text-center text-sm text-muted">Want a written answer? <Link href={`/ask?q=${encodeURIComponent(committed)}`} className="text-accent underline">Ask AI about “{committed}”</Link></p>}

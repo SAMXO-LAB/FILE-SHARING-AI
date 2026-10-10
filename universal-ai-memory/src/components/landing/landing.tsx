@@ -6,7 +6,7 @@ import {
   ArrowRight, AudioLines, Bot, Brain, ChevronDown, Clock3, Eye, FileSpreadsheet, FileText, FolderLock, Image as ImageIcon, KeyRound,
   Layers, Link2, Lock, Menu, MessageCircle, MousePointerClick, NotebookPen, Presentation, Quote, Search, Send, Share2, ShieldCheck, Sparkles, Trash2, UploadCloud, X,
 } from "lucide-react";
-import { LogoMark } from "@/components/app/auth-shell";
+import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { HeroDemo } from "./hero-demo";
 import { Item, LandingMotion, Reveal, Stagger, fadeUp, stagger } from "./motion";
@@ -40,6 +40,17 @@ export function Landing() {
   );
 }
 
+const MotionLink = motion.create(Link);
+
+/** Sign in / sign up links: lift on hover, squish on press, and a light sweep on click. */
+function AuthLink({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
+  return (
+    <MotionLink href={href} className={`press-shine relative overflow-hidden ${className ?? ""}`} whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 500, damping: 26 }}>
+      {children}
+    </MotionLink>
+  );
+}
+
 /* ---------------------------------------------------------------------------------------------- */
 
 function Backdrop() {
@@ -58,13 +69,13 @@ function TopBar() {
   return (
     <motion.header style={{ boxShadow: shadow }} className="sticky top-0 z-40 bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] backdrop-blur-xl" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2.5 rounded-lg text-[15px] font-semibold tracking-[-0.015em]"><LogoMark size="sm" />Share Files AI</Link>
+        <Link href="/" className="flex items-center rounded-lg" aria-label="Share Files AI home"><Logo size="sm" /></Link>
         <nav aria-label="Sections" className="hidden flex-1 items-center gap-1 md:flex">
           {NAV.map((n) => <a key={n.href} href={n.href} className="rounded-lg px-3 py-1.5 text-[14px] text-muted transition-colors hover:bg-[rgb(var(--line)/0.045)] hover:text-fg">{n.label}</a>)}
         </nav>
         <div className="ml-auto hidden items-center gap-2 md:flex">
-          <Link href="/login" className="rounded-lg px-3 py-1.5 text-[14px] font-medium text-fg transition-colors hover:bg-[rgb(var(--line)/0.045)]">Sign in</Link>
-          <Link href="/signup" className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-accent px-4 text-[14px] font-medium text-white shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_55%,transparent)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_88%,black)]">Get started<ArrowRight className="h-4 w-4" aria-hidden /></Link>
+          <AuthLink href="/login" className="rounded-lg px-3 py-1.5 text-[14px] font-medium text-fg transition-colors hover:bg-[rgb(var(--line)/0.045)]">Sign in</AuthLink>
+          <AuthLink href="/signup" className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-accent px-4 text-[14px] font-medium text-white shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_55%,transparent)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_88%,black)]">Get started<ArrowRight className="h-4 w-4" aria-hidden /></AuthLink>
         </div>
         <button className="ml-auto grid h-9 w-9 place-items-center rounded-lg hover:bg-[rgb(var(--line)/0.05)] md:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
       </div>
@@ -72,8 +83,8 @@ function TopBar() {
         <motion.nav aria-label="Sections" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="border-t hairline bg-card px-4 pb-4 pt-2 md:hidden">
           {NAV.map((n) => <a key={n.href} href={n.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2.5 text-[15px] text-fg hover:bg-[rgb(var(--line)/0.045)]">{n.label}</a>)}
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <Link href="/login" className="grid h-10 place-items-center rounded-[10px] border hairline text-[14px] font-medium">Sign in</Link>
-            <Link href="/signup" className="grid h-10 place-items-center rounded-[10px] bg-accent text-[14px] font-medium text-white">Get started</Link>
+            <AuthLink href="/login" className="grid h-10 place-items-center rounded-[10px] border hairline text-[14px] font-medium">Sign in</AuthLink>
+            <AuthLink href="/signup" className="grid h-10 place-items-center rounded-[10px] bg-accent text-[14px] font-medium text-white">Get started</AuthLink>
           </div>
         </motion.nav>
       )}
@@ -97,10 +108,10 @@ function Hero() {
           Share Files AI keeps your documents, photos, saved links, notes and chat exports in one private place, then answers your questions in plain language, with the exact sources it used.
         </motion.p>
         <motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/signup" className="group inline-flex h-12 items-center gap-2 rounded-[12px] bg-accent px-6 text-[15px] font-medium text-white shadow-[0_8px_24px_-8px_color-mix(in_srgb,var(--accent)_60%,transparent)] transition-[background-color,transform] hover:bg-[color-mix(in_srgb,var(--accent)_88%,black)] active:scale-[0.98]">
+          <AuthLink href="/signup" className="group inline-flex h-12 items-center gap-2 rounded-[12px] bg-accent px-6 text-[15px] font-medium text-white shadow-[0_8px_24px_-8px_color-mix(in_srgb,var(--accent)_60%,transparent)] transition-[background-color,transform] hover:bg-[color-mix(in_srgb,var(--accent)_88%,black)] active:scale-[0.98]">
             Create your account<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-          </Link>
-          <Link href="/login" className="inline-flex h-12 items-center rounded-[12px] border hairline bg-card px-6 text-[15px] font-medium shadow-[var(--shadow-xs)] transition-colors hover:border-[rgb(var(--line)/0.18)]">Sign in</Link>
+          </AuthLink>
+          <AuthLink href="/login" className="inline-flex h-12 items-center rounded-[12px] border hairline bg-card px-6 text-[15px] font-medium shadow-[var(--shadow-xs)] transition-colors hover:border-[rgb(var(--line)/0.18)]">Sign in</AuthLink>
         </motion.div>
         <motion.ul variants={fadeUp} className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[13.5px] text-muted">
           {[{ i: Lock, t: "Private by default" }, { i: Quote, t: "Answers cite their sources" }, { i: MessageCircle, t: "WhatsApp & Telegram imports" }].map(({ i: I, t }) => (
@@ -194,7 +205,7 @@ const FEATURES = [
   { icon: Search, title: "Search by words or meaning", text: "Keyword, date, sender and file-type filters, plus meaning-based search when it's switched on." },
   { icon: FileText, title: "Document assistant", text: "Summaries, key dates and names, comparisons between files, and study guides." },
   { icon: Layers, title: "Collections", text: "Group files, links, notes and chats by project. Summarize or ask about a whole collection.", span: "md:col-span-2" },
-  { icon: Share2, title: "Private sharing", text: "Share a file with one person by username. Set an expiry, allow view-only, and revoke any time." },
+  { icon: Share2, title: "Send to friends", text: "Add friends by username and chat: drag files in to send them, stop sharing any time. Or share nearby and to other apps from your phone." },
   { icon: MousePointerClick, title: "Drag and drop anywhere", text: "Drop files, folders, links or text onto any page. Drop onto a folder or collection to file it there." },
   { icon: Bot, title: "Telegram bot", text: "Link the bot and anything you send it, messages or files, is saved to your memory." },
   { icon: Clock3, title: "Timeline", text: "Browse everything you've added by date, newest first." },
@@ -292,10 +303,6 @@ function Privacy() {
             </Item>
           ))}
         </Stagger>
-        <Reveal delay={0.1} className="mt-8 flex gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-[13.5px] leading-relaxed text-[#cbd5e1]">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[#93c5fd]" aria-hidden />
-          <p><strong className="font-semibold text-white">Honest note:</strong> files are encrypted at rest by the storage provider but are not end-to-end encrypted. The server reads text to make it searchable, and in Cloud AI mode the AI provider sees the passages it's sent. WhatsApp has no automatic sync, so chats come from exports you make yourself.</p>
-        </Reveal>
       </div>
     </section>
   );
@@ -304,7 +311,8 @@ function Privacy() {
 /* ---------------------------------------------------------------------------------------------- */
 
 const FAQS = [
-  { q: "What can I upload?", a: "PDFs, Word, Excel, PowerPoint, text and code files, images, audio and video. Text is extracted from documents automatically. Text in images and speech in recordings can be read too when the server has those features enabled." },
+  { q: "Can I send files to friends?", a: "Yes. Add friends by their unique username and you each get a private chat: drag files in to send them, and stop sharing any time. For people who aren't on Share Files AI, the share button opens your device's share sheet with WhatsApp, Gmail and the rest, plus Quick Share / Nearby Share or AirDrop for phones and laptops close by." },
+  { q: "What can I upload?", a: "Any file type: PDFs, Word, Excel, PowerPoint, OpenDocument, e-books, text and code, images and design files, audio, video, archives and more. Just drag and drop. Text is extracted from documents automatically, and text in images and speech in recordings can be read too when the server has those features enabled. Programs are stored safely but never opened by the server." },
   { q: "How do WhatsApp and Telegram work?", a: "Export a chat from WhatsApp (as .txt or .zip) or from Telegram Desktop (as JSON) and upload it. Importing the same chat again only adds new messages. You can also link the Telegram bot and send it things to save." },
   { q: "Does the AI make things up?", a: "Answers are written only from the items it found in your memory, and each one lists its sources so you can check. If nothing relevant is found, it tells you. Like any AI, it can still be wrong, so the sources are always there." },
   { q: "Do I need an AI provider for it to work?", a: "No. Without one you still get full search and matching passages from your files. Written answers and summaries appear when AI is configured and you allow it in Settings → Privacy." },
@@ -353,8 +361,8 @@ function FinalCta() {
         <h2 className="relative text-[28px] font-semibold tracking-[-0.025em] sm:text-[36px]">Stop searching. Start asking.</h2>
         <p className="relative mx-auto mt-3 max-w-xl text-[16px] text-white/85">Create your account, drop in a few files, and ask your first question in under a minute.</p>
         <div className="relative mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/signup" className="inline-flex h-12 items-center gap-2 rounded-[12px] bg-white px-6 text-[15px] font-medium text-[#1d4ed8] shadow-[0_8px_24px_-10px_rgb(0_0_0/0.35)] transition-transform hover:-translate-y-0.5 active:scale-[0.98]">Get started<ArrowRight className="h-4 w-4" aria-hidden /></Link>
-          <Link href="/login" className="inline-flex h-12 items-center rounded-[12px] border border-white/30 px-6 text-[15px] font-medium text-white transition-colors hover:bg-white/10">I already have an account</Link>
+          <AuthLink href="/signup" className="inline-flex h-12 items-center gap-2 rounded-[12px] bg-white px-6 text-[15px] font-medium text-[#1d4ed8] shadow-[0_8px_24px_-10px_rgb(0_0_0/0.35)] transition-transform hover:-translate-y-0.5 active:scale-[0.98]">Get started<ArrowRight className="h-4 w-4" aria-hidden /></AuthLink>
+          <AuthLink href="/login" className="inline-flex h-12 items-center rounded-[12px] border border-white/30 px-6 text-[15px] font-medium text-white transition-colors hover:bg-white/10">I already have an account</AuthLink>
         </div>
       </Reveal>
     </section>
@@ -367,7 +375,7 @@ function Footer() {
     <motion.footer initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="border-t hairline bg-card">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-start md:justify-between">
         <div className="max-w-sm">
-          <Link href="/" className="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.015em]"><LogoMark size="sm" />Share Files AI</Link>
+          <Link href="/" className="flex items-center" aria-label="Share Files AI home"><Logo size="md" tagline /></Link>
           <p className="mt-3 text-[14px] leading-relaxed text-muted">Your files, links, notes and chats in one private place, with answers you can trace back to the source.</p>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 gap-y-2 text-[14px]">
@@ -379,7 +387,7 @@ function Footer() {
       <div className="border-t hairline">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-[13px] text-muted sm:flex-row sm:px-6">
           <p>© {year} Share Files AI</p>
-          <p className="flex items-center gap-1.5">Developed by <span className="font-semibold text-fg">Chandra Shekar</span></p>
+          <p className="flex items-center gap-1.5">Developed by <span className="font-semibold text-fg">Chandrashekar</span></p>
         </div>
       </div>
     </motion.footer>

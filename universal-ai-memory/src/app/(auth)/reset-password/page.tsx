@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
-import { AuthShell } from "@/components/app/auth-shell";
-import { Button } from "@/components/ui/button";
+import { AuthShell, AuthSubmit } from "@/components/app/auth-shell";
 import { FieldError, Hint, Input, Label } from "@/components/ui/input";
 import { api, errorMessage } from "@/lib/client/api";
 import { passwordSchema } from "@/lib/validation";
@@ -40,7 +39,7 @@ export default function ResetPasswordPage() {
           <FieldError>{errors.confirm?.message}</FieldError>
         </div>
         <FieldError>{error}</FieldError>
-        <Button type="submit" className="w-full" loading={isSubmitting}>Update password</Button>
+        <AuthSubmit busy={isSubmitting} busyLabel="Saving…" doneLabel="Saved">Update password</AuthSubmit>
       </form>
     </AuthShell>
   );

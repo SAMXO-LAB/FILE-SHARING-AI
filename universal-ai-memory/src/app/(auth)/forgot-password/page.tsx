@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AuthShell } from "@/components/app/auth-shell";
-import { Button } from "@/components/ui/button";
+import { AuthShell, AuthSubmit } from "@/components/app/auth-shell";
 import { FieldError, Input, Label } from "@/components/ui/input";
 import { api, errorMessage } from "@/lib/client/api";
 
@@ -28,7 +27,7 @@ export default function ForgotPasswordPage() {
             <FieldError>{errors.email?.message}</FieldError>
           </div>
           <FieldError>{error}</FieldError>
-          <Button type="submit" className="w-full" loading={isSubmitting}>Send reset link</Button>
+          <AuthSubmit busy={isSubmitting} busyLabel="Sending…" doneLabel="Sent">Send reset link</AuthSubmit>
         </form>
       )}
     </AuthShell>

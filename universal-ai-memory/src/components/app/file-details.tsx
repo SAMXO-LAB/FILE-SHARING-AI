@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Clock, Copy, Download, FolderInput, Layers, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Star, Tag, Trash2, Users, X } from "lucide-react";
+import { Clock, Copy, Download, FolderInput, Layers, Pencil, Radio, RefreshCw, RotateCcw, Send, Share2, Sparkles, Star, Tag, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge, Skeleton } from "@/components/ui/misc";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { StatusBadge, TypeIcon } from "./file-visuals";
 import { FilePreview } from "./file-preview";
 import { CollectionPicker, FolderPicker } from "./pickers";
 import { ShareDialog } from "./share-dialog";
+import { SendToFriendDialog } from "./friends-shared";
+import { shareStoredFileOut } from "@/lib/client/share-out";
 
 interface OwnerView { file: FileRow; collections: { id: string; name: string; color: string | null }[]; shares: { id: string; status: string }[] }
 interface SharedView { file: Pick<FileRow, "id" | "display_name" | "mime_type" | "category" | "size_bytes" | "created_at" | "status" | "ai_metadata" | "page_count">; shared: { canDownload: boolean; expiresAt: string | null; note: string | null; owner: string | null } }
@@ -45,6 +47,8 @@ export function FileDetails({ fileId, onClose, onChanged }: { fileId: string; on
   const [moveOpen, setMoveOpen] = useState(false);
   const [colOpen, setColOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [friendOpen, setFriendOpen] = useState(false);
+  const [sharingOut, setSharingOut] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [desc, setDesc] = useState("");
@@ -59,6 +63,14 @@ export function FileDetails({ fileId, onClose, onChanged }: { fileId: string; on
   }
   async function download() {
     try { const r = await api<{ url: string }>(`/api/files/${fileId}/url?mode=download`); window.location.assign(r.url); } catch (e) { toast.error("Couldn't start the download", { description: errorMessage(e) }); }
+  }
+  async function shareOut() {
+    if (!view) return;
+    setSharingOut(true);
+    try {
+      const r = await shareStoredFileOut(fileId, view.file.display_name, view.file.mime_type, Number(view.file.size_bytes));
+      if (r === "downloaded") toast("Downloaded instead", { description: "This browser can't open the share sheet. Share the downloaded file from your device." });
+    } catch (e) { toast.error("Couldn't share", { description: errorMessage(e) }); } finally { setSharingOut(false); }
   }
   async function act(path: string, ok: string, method: "POST" | "DELETE" = "POST") {
     setBusy(true);
@@ -128,6 +140,8 @@ export function FileDetails({ fileId, onClose, onChanged }: { fileId: string; on
 
             <div className="flex flex-wrap gap-2 border-t hairline pt-4">
               {(!isShared(view) || view.shared.canDownload) && <Button variant="primary" size="sm" onClick={() => void download()} disabled={view.file.status === "uploading"}><Download className="h-4 w-4" aria-hidden />Download</Button>}
+              {owner && !owner.file.deleted_at && <Button variant="glass" size="sm" onClick={() => setFriendOpen(true)} disabled={view.file.status === "uploading"}><Send className="h-4 w-4" aria-hidden />Send to friend</Button>}
+              {(!isShared(view) || view.shared.canDownload) && <Button variant="glass" size="sm" loading={sharingOut} onClick={() => void shareOut()} disabled={view.file.status === "uploading"} title="Opens your device's share sheet: other apps, Quick Share / Nearby Share or AirDrop">{!sharingOut && <Radio className="h-4 w-4" aria-hidden />}Nearby &amp; apps</Button>}
               {owner && !owner.file.deleted_at && (
                 <>
                   <Button variant="glass" size="sm" onClick={() => void patch({ starred: !owner.file.starred })}><Star className={owner.file.starred ? "h-4 w-4 fill-current text-warn" : "h-4 w-4"} aria-hidden />{owner.file.starred ? "Starred" : "Star"}</Button>
@@ -152,6 +166,7 @@ export function FileDetails({ fileId, onClose, onChanged }: { fileId: string; on
                 <FolderPicker open={moveOpen} onOpenChange={setMoveOpen} onPick={async (folderId) => { await patch({ folderId }, "Moved"); }} />
                 <CollectionPicker open={colOpen} onOpenChange={setColOpen} items={[{ type: "file", id: fileId }]} onAdded={() => { void q.reload(); }} />
                 <ShareDialog fileId={fileId} fileName={owner.file.display_name} open={shareOpen} onOpenChange={setShareOpen} />
+                <SendToFriendDialog open={friendOpen} onOpenChange={setFriendOpen} fileIds={[fileId]} fileLabel={`“${owner.file.display_name}”`} />
               </>
             )}
           </>

@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, MailCheck, XCircle } from "lucide-react";
 import { z } from "zod";
-import { AuthShell } from "@/components/app/auth-shell";
+import { AuthShell, AuthSubmit } from "@/components/app/auth-shell";
 import { GoogleButton, OrDivider } from "@/components/app/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { FieldError, Hint, Input, Label } from "@/components/ui/input";
@@ -21,6 +22,8 @@ export function SignupForm({ google = false }: { google?: boolean }) {
   const [done, setDone] = useState<{ email: string; needsConfirmation: boolean } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [check, setCheck] = useState<Check>({ state: "idle" });
+  const [created, setCreated] = useState(false);
+  const [errorKey, setErrorKey] = useState(0);
   const { register, handleSubmit, watch, setError, formState: { errors, isSubmitting } } = useForm<Values>({ resolver: zodResolver(schema), mode: "onTouched" });
   const username = watch("username");
 
@@ -47,11 +50,12 @@ export function SignupForm({ google = false }: { google?: boolean }) {
     try {
       const r = await api<{ needsConfirmation: boolean }>("/api/auth/signup", { body: values });
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full reload so the new session cookie is picked up
-      if (!r.needsConfirmation) { window.location.assign("/"); return; }
+      if (!r.needsConfirmation) { setCreated(true); window.location.assign("/"); return; }
       setDone({ email: values.email, needsConfirmation: true });
     } catch (e) {
       if (e instanceof ApiClientError && (e.details as { field?: string } | undefined)?.field === "username") setError("username", { message: e.message });
       else setFormError(errorMessage(e));
+      setErrorKey((k) => k + 1);
     }
   }
 
@@ -59,7 +63,9 @@ export function SignupForm({ google = false }: { google?: boolean }) {
     return (
       <AuthShell title="Check your email">
         <div className="flex flex-col items-center gap-3 py-2 text-center">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-accent-soft text-accent"><MailCheck className="h-6 w-6" /></div>
+          <motion.div initial={{ scale: 0.4, rotate: -12, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.15 }} className="relative grid h-14 w-14 place-items-center rounded-2xl bg-accent-soft text-accent">
+            <span className="ai-ring" aria-hidden /><MailCheck className="h-7 w-7" />
+          </motion.div>
           <p className="text-sm text-muted">We sent a verification link to <span className="text-fg">{done.email}</span>. Open it to finish creating your account, then sign in.</p>
           <Button asChild variant="glass" className="mt-2"><Link href="/login">Go to sign in</Link></Button>
         </div>
@@ -68,9 +74,9 @@ export function SignupForm({ google = false }: { google?: boolean }) {
   }
 
   return (
-    <AuthShell title="Create your account" subtitle="One private place to search everything you save." footer={<>Already have an account? <Link href="/login" className="text-accent underline-offset-4 hover:underline">Sign in</Link></>}>
+    <AuthShell errorKey={errorKey} title="Create your account" subtitle="One private place to search everything you save." footer={<>Already have an account? <Link href="/login" className="text-accent underline-offset-4 hover:underline">Sign in</Link></>}>
       {google && <><GoogleButton label="Sign up with Google" /><OrDivider /></>}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit(onSubmit, () => setErrorKey((k) => k + 1))} className="space-y-4" noValidate>
         <div>
           <Label htmlFor="displayName">Name <span className="font-normal text-muted">(optional)</span></Label>
           <Input id="displayName" autoComplete="name" {...register("displayName")} />
@@ -85,7 +91,7 @@ export function SignupForm({ google = false }: { google?: boolean }) {
               {check.state === "bad" && <XCircle className="h-4 w-4 text-danger" aria-label="Unavailable" />}
             </span>
           </div>
-          {errors.username ? <FieldError>{errors.username.message}</FieldError> : check.state === "bad" ? <FieldError>{check.message}</FieldError> : <p id="username-hint" className="mt-1.5 text-xs text-muted">{check.state === "ok" ? "Available" : "3–30 letters, numbers or underscores."}</p>}
+          {errors.username ? <FieldError>{errors.username.message}</FieldError> : check.state === "bad" ? <FieldError>{check.message}</FieldError> : <p id="username-hint" className="mt-1.5 text-xs text-muted">{check.state === "ok" ? "Available" : "3–30 letters, numbers or underscores. Friends find you by it, and you can sign in with it."}</p>}
         </div>
         <div>
           <Label htmlFor="email">Email</Label>
@@ -98,7 +104,7 @@ export function SignupForm({ google = false }: { google?: boolean }) {
           {errors.password ? <FieldError>{errors.password.message}</FieldError> : <Hint>At least 10 characters, with a letter and a number.</Hint>}
         </div>
         <FieldError>{formError}</FieldError>
-        <Button type="submit" className="w-full" loading={isSubmitting} disabled={check.state === "bad"}>Create account</Button>
+        <AuthSubmit busy={isSubmitting} done={created} disabled={check.state === "bad"} busyLabel="Creating your account…" doneLabel="You're in!">Create account</AuthSubmit>
       </form>
     </AuthShell>
   );

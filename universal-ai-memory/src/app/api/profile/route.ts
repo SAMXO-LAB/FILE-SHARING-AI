@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { errors, route } from "@/lib/api";
+import { isKnownAvatarValue } from "@/lib/avatars";
 
 export const GET = route({}, async ({ supabase, user }) => {
   const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single();
@@ -13,6 +14,8 @@ export const PATCH = route(
       display_name: z.string().trim().max(80).nullable().optional(),
       bio: z.string().trim().max(500).nullable().optional(),
       profile_visibility: z.enum(["private", "connections", "public"]).optional(),
+      // Only built-in avatars ("avatar:<id>"), never arbitrary URLs.
+      avatar_url: z.string().refine(isKnownAvatarValue, "Choose one of the built-in avatars.").nullable().optional(),
     }),
   },
   async ({ body, supabase, user }) => {

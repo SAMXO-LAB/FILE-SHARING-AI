@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowDownAZ, ChevronRight, Copy, Download, Files, Folder, FolderInput, FolderPlus, Grid3X3, Layers, List, MoreHorizontal, Pencil, Plus, RotateCcw, Search, Star, Tag, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DropZone } from "@/components/ui/drop-zone";
 import { useDialogs } from "@/components/ui/confirm";
 import { Input } from "@/components/ui/input";
 import { Badge, EmptyState, ErrorState, PageHeader, Skeleton } from "@/components/ui/misc";
@@ -19,6 +20,7 @@ import { StatusBadge, TypeIcon } from "./file-visuals";
 import { CollectionPicker, FolderPicker, type FolderRow } from "./pickers";
 import { SharedWithMe } from "./shared-with-me";
 import { Thumb } from "./thumb";
+import { useUploads } from "./upload-context";
 import { FILES_CHANGED } from "./upload-context";
 
 type View = "all" | "starred" | "recent" | "shared" | "trash" | "duplicates";
@@ -40,6 +42,7 @@ export function FileManager({ title, description, categories, grid: gridDefault 
   const pathname = usePathname();
   const params = useSearchParams();
   const { openAdd } = useAddToMemory();
+  const uploads = useUploads();
   const { confirm, prompt } = useDialogs();
 
   const [view, setView] = useState<View>((params.get("view") as View) || "all");
@@ -162,8 +165,10 @@ export function FileManager({ title, description, categories, grid: gridDefault 
     ...(categories ?? ["document", "image", "video", "audio", "data", "code", "archive", "other"]).map((c) => ({ value: c, label: c[0]!.toUpperCase() + c.slice(1) })),
   ];
 
+  const currentFolder = withFolders && view === "all" && folder ? folderList.find((f) => f.id === folder) ?? null : null;
+
   return (
-    <div>
+    <div {...(currentFolder ? { "data-drop-folder": currentFolder.id, "data-drop-label": currentFolder.name, "data-drop-quiet": "" } : {})}>
       {!hideHeader && (
         <PageHeader
           title={title}
@@ -251,9 +256,16 @@ export function FileManager({ title, description, categories, grid: gridDefault 
             view === "trash" ? <EmptyState icon={Trash2} title="Trash is empty">Deleted files stay here for 30 days before they're removed for good.</EmptyState>
             : view === "starred" ? <EmptyState icon={Star} title="No starred files">Star a file to keep it handy.</EmptyState>
             : debounced || category !== "all" ? <EmptyState icon={Search} title="No files match">Try a different name or clear the filters.</EmptyState>
-            : <EmptyState icon={Files} title={categories ? "Nothing here yet" : "No files yet"} action={<Button onClick={() => openAdd("files", { folderId: folder })}><Plus className="h-4 w-4" aria-hidden />Add files</Button>}>Drag files anywhere on this page, or use Add files. They'll be read and become searchable with Ask AI.</EmptyState>
+            : <DropZone
+                className="min-h-[260px]"
+                onFiles={(f) => { uploads.add(f, { folderId: folder }); toast(`Uploading ${f.length} file${f.length === 1 ? "" : "s"}`); }}
+                dropLabel={currentFolder ? `add them to ${currentFolder.name}` : "add them to memory"}
+                icon={Files}
+                title={<>{categories ? "Nothing here yet" : currentFolder ? "This folder is empty" : "No files yet"}: drop files here, or <span className="text-accent">browse</span></>}
+                hint="Any file type works. Everything is read and becomes searchable with Ask AI."
+              />
           ) : layout === "grid" ? (
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <ul className="stagger-in grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {rows.map((f) => (
                 <li key={f.id} draggable={withFolders && view === "all"} onDragStart={(e) => { e.dataTransfer.setData(DRAG_TYPE, JSON.stringify(selected.has(f.id) ? [...selected] : [f.id])); e.dataTransfer.effectAllowed = "move"; }} className={cn("card card-hover group relative p-2", selected.has(f.id) && "border-accent ring-2 ring-accent/25")}>
                   <button onClick={() => setOpen(f.id)} className="block w-full text-left" aria-label={`Open ${f.display_name}`}>
@@ -272,7 +284,7 @@ export function FileManager({ title, description, categories, grid: gridDefault 
                 <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)))} aria-label="Select all files" className="h-4 w-4 accent-[var(--accent)]" />
                 <span className="flex-1">Name</span><span className="hidden w-20 text-right sm:block">Size</span><span className="hidden w-28 text-right md:block">Added</span><span className="w-20" />
               </div>
-              <ul className="divide-y divide-[rgb(var(--line)/0.08)]">
+              <ul className="stagger-in divide-y divide-[rgb(var(--line)/0.08)]">
                 {rows.map((f) => (
                   <li key={f.id} draggable={withFolders && view === "all"} onDragStart={(e) => { e.dataTransfer.setData(DRAG_TYPE, JSON.stringify(selected.has(f.id) ? [...selected] : [f.id])); e.dataTransfer.effectAllowed = "move"; }} className={cn("group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[rgb(var(--line)/0.025)]", selected.has(f.id) && "bg-accent-soft hover:bg-accent-soft")}>
                     <input type="checkbox" checked={selected.has(f.id)} onChange={() => toggle(f.id)} aria-label={`Select ${f.display_name}`} className="h-4 w-4 accent-[var(--accent)]" />

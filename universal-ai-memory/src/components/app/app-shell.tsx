@@ -8,7 +8,7 @@ import { AddToMemoryProvider, useAddToMemory } from "./add-dialog";
 import { useApp } from "./app-context";
 import { DropOverlay } from "./drop-overlay";
 import { ImportWatcher } from "./import-watcher";
-import { LogoMark } from "./auth-shell";
+import { Logo } from "@/components/brand/logo";
 import { Sidebar, SIDEBAR_W } from "./sidebar";
 import { UploadProvider } from "./upload-context";
 import { UploadTray } from "./upload-tray";
@@ -23,7 +23,7 @@ function Frame({ children }: { children: React.ReactNode }) {
       <Sidebar mobileOpen={menu} onMobileClose={() => setMenu(false)} />
       <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b hairline bg-[color-mix(in_srgb,var(--card)_86%,transparent)] px-3 backdrop-blur-xl lg:hidden" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <Button size="icon" variant="ghost" aria-label="Open menu" onClick={() => setMenu(true)}><Menu className="h-5 w-5" /></Button>
-        <span className="flex flex-1 items-center gap-2 text-[15px] font-semibold tracking-[-0.015em]"><LogoMark size="sm" />Share Files AI</span>
+        <span className="flex flex-1 items-center"><Logo size="sm" /></span>
         <Button size="icon" onClick={() => openAdd()} aria-label="Add to Memory"><Plus className="h-[18px] w-[18px]" /></Button>
       </header>
       <main

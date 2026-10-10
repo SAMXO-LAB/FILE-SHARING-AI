@@ -31,7 +31,7 @@ export function ConversationsView() {
         : list.error ? <ErrorState message={list.error} onRetry={list.reload} />
         : rows.length === 0 ? <EmptyState icon={MessagesSquare} title={dq || source !== "all" ? "No conversations match" : "No conversations yet"} action={!dq && source === "all" ? <Button onClick={() => openAdd("import")}>Import a chat</Button> : undefined}>{dq || source !== "all" ? "Try a different name or filter." : "Export a chat from WhatsApp or Telegram Desktop and upload it. Names and times come from the file; nothing is read from your accounts."}</EmptyState>
         : (
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="stagger-in grid gap-3 sm:grid-cols-2">
             {rows.map((c) => (
               <li key={c.id}>
                 <Link href={`/conversations/${c.id}`} className="glass flex h-full items-start gap-3 p-4 card-hover">

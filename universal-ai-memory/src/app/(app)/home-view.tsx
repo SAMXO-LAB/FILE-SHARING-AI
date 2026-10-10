@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { AlertTriangle, ArrowUp, FileUp, ImageIcon, Files, FileText, Layers, Link2, Loader2, MessagesSquare, NotebookPen, Send, Sparkles, Users } from "lucide-react";
+import { AlertTriangle, FileUp, ImageIcon, Files, FileText, Layers, Link2, Loader2, MessagesSquare, NotebookPen, Send, Sparkles, Users } from "lucide-react";
 import { useAddToMemory } from "@/components/app/add-dialog";
+import { AiBar, AiSendButton, CyclingPlaceholder } from "@/components/app/ai-bar";
 import { useApp } from "@/components/app/app-context";
 import { TimelineList, type TimelineItem } from "@/components/app/timeline-list";
 import { Button } from "@/components/ui/button";
@@ -56,20 +58,35 @@ export function HomeView() {
 
   return (
     <div className="space-y-8">
-      <section className="pt-4 text-center sm:pt-10">
-        <p className="min-h-5 text-[13.5px] font-medium text-muted">{name}</p>
-        <h1 className="mx-auto mt-2 max-w-2xl text-[30px] font-semibold leading-tight tracking-[-0.03em] sm:text-[38px]">What would you like to find?</h1>
-        <p className="mx-auto mt-2 max-w-lg text-[15px] text-muted">Search and ask across your files, links, notes and chats.</p>
-        <form onSubmit={(e) => { e.preventDefault(); go(q); }} className="focus-ring mx-auto mt-7 flex max-w-2xl items-center gap-2 rounded-[calc(var(--radius)*1.25)] border hairline bg-card p-2 pl-4 shadow-[var(--shadow-md)] transition-[border-color,box-shadow] duration-150" role="search">
-          <Sparkles className="h-5 w-5 shrink-0 text-accent" strokeWidth={1.8} aria-hidden />
-          <label htmlFor="home-ask" className="sr-only">Ask about your files, chats, links and notes</label>
-          <input id="home-ask" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask anything about your digital life..." maxLength={4000} autoComplete="off" className="h-11 min-w-0 flex-1 bg-transparent text-[15.5px] outline-none placeholder:text-subtle focus-visible:outline-none" />
-          <Button type="submit" size="icon" className="h-10 w-10 rounded-[11px]" aria-label="Ask" disabled={!q.trim()}><ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.2} /></Button>
-        </form>
+      <section className="relative pt-4 text-center sm:pt-10">
+        <div aria-hidden className="pointer-events-none absolute left-1/2 top-0 -z-10 h-64 w-[min(720px,100%)] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,#2F8CFF_16%,transparent),transparent)] blur-2xl" />
+        <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="min-h-5 text-[13.5px] font-medium text-muted">{name}</motion.p>
+        <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }} className="mx-auto mt-2 max-w-2xl text-[30px] font-semibold leading-tight tracking-[-0.035em] sm:text-[40px]">
+          What would you like to <span className="text-gradient-brand">find</span>?
+        </motion.h1>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="mx-auto mt-2 max-w-lg text-[15px] text-muted">Search and ask across your files, links, notes and chats.</motion.p>
+        <motion.form
+          initial={{ opacity: 0, y: 14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.18, type: "spring", stiffness: 240, damping: 24 }}
+          onSubmit={(e) => { e.preventDefault(); go(q); }} className="mx-auto mt-7 max-w-2xl" role="search"
+        >
+          <AiBar innerClassName="flex items-center gap-2 p-2 pl-4 shadow-[var(--shadow-md)]">
+            <motion.span animate={{ rotate: [0, 14, -10, 0] }} transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }} className="grid shrink-0 place-items-center"><Sparkles className="h-5 w-5 text-accent" strokeWidth={1.8} aria-hidden /></motion.span>
+            <label htmlFor="home-ask" className="sr-only">Ask about your files, chats, links and notes</label>
+            <span className="relative flex min-w-0 flex-1">
+              <CyclingPlaceholder show={!q} className="text-left text-[15.5px]" />
+              <input id="home-ask" value={q} onChange={(e) => setQ(e.target.value)} maxLength={4000} autoComplete="off" className="relative h-11 min-w-0 flex-1 bg-transparent text-left text-[15.5px] outline-none focus-visible:outline-none" />
+            </span>
+            <AiSendButton ready={!!q.trim()} label="Ask" />
+          </AiBar>
+        </motion.form>
         {suggestions.length > 0 && (
-          <div className="mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2" aria-label="Suggestions">
-            {suggestions.map((s) => <button key={s} onClick={() => go(s)} className="inline-flex h-8 items-center rounded-full border hairline bg-card px-3.5 text-[13px] text-muted shadow-[var(--shadow-xs)] transition-colors hover:border-accent/30 hover:text-accent">{s}</button>)}
-          </div>
+          <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0.3 } } }} className="mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2" aria-label="Suggestions">
+            {suggestions.map((s) => (
+              <motion.button key={s} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }} whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} onClick={() => go(s)} className="inline-flex h-8 items-center gap-1.5 rounded-full border hairline bg-card px-3.5 text-[13px] text-muted shadow-[var(--shadow-xs)] transition-colors hover:border-accent/30 hover:text-accent">
+                <Sparkles className="h-3 w-3 text-accent/70" aria-hidden />{s}
+              </motion.button>
+            ))}
+          </motion.div>
         )}
         {!caps.ai && <p className="mx-auto mt-4 max-w-xl text-xs text-subtle">No AI provider is configured on this server, so you'll get matching passages and files instead of written answers.</p>}
         {caps.ai && prefs.processing_mode !== "cloud_ai" && prefs.processing_mode !== "local" && <p className="mx-auto mt-4 max-w-xl text-xs text-muted">Your privacy mode keeps content away from AI providers, so answers list matching passages. <Link className="underline" href="/settings?tab=privacy">Change in Settings</Link></p>}
@@ -89,7 +106,7 @@ export function HomeView() {
         <section aria-label="Get started">
           <EmptyState icon={Sparkles} title="Your memory is empty. Let's fill it.">Add something, then ask about it here. Nothing is shown until you add it yourself.</EmptyState>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <button onClick={() => openAdd("files")} className="card card-hover flex flex-col items-start gap-2 p-5 text-left"><span className="mb-1 grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent"><FileUp className="h-5 w-5" strokeWidth={1.8} aria-hidden /></span><span className="font-medium">Upload files</span><span className="text-sm text-muted">PDFs, documents, photos, audio, video. Drag them anywhere.</span></button>
+            <button onClick={() => openAdd("files")} className="card card-hover flex flex-col items-start gap-2 p-5 text-left"><span className="mb-1 grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent"><FileUp className="h-5 w-5" strokeWidth={1.8} aria-hidden /></span><span className="font-medium">Upload files</span><span className="text-sm text-muted">Any file type: documents, photos, video, audio, archives. Drag them anywhere.</span></button>
             <button onClick={() => openAdd("link")} className="card card-hover flex flex-col items-start gap-2 p-5 text-left"><span className="mb-1 grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent"><Link2 className="h-5 w-5" strokeWidth={1.8} aria-hidden /></span><span className="font-medium">Save a link</span><span className="text-sm text-muted">Articles and pages you want to find again.</span></button>
             <button onClick={() => openAdd("import")} className="card card-hover flex flex-col items-start gap-2 p-5 text-left"><span className="mb-1 grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent"><MessagesSquare className="h-5 w-5" strokeWidth={1.8} aria-hidden /></span><span className="font-medium">Import a chat</span><span className="text-sm text-muted">Bring in a WhatsApp or Telegram export you made yourself.</span></button>
           </div>
@@ -97,14 +114,16 @@ export function HomeView() {
         </section>
       ) : c && (
         <>
-          <section aria-label="Your memory at a glance" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <motion.section initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }} aria-label="Your memory at a glance" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {tiles.map((t) => (
-              <Link key={t.href} href={t.href} className="card card-hover flex flex-col gap-3 p-4">
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent-soft text-accent"><t.icon className="h-4 w-4" strokeWidth={1.9} aria-hidden /></span>
-                <div><p className="text-[22px] font-semibold tracking-[-0.02em] tabular-nums">{t.n.toLocaleString()}</p><p className="text-xs text-muted">{t.label}</p></div>
-              </Link>
+              <motion.div key={t.href} variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.2, 0.8, 0.2, 1] } } }}>
+                <Link href={t.href} className="card card-hover group flex h-full flex-col gap-3 p-4">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent-soft text-accent transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110"><t.icon className="h-4 w-4" strokeWidth={1.9} aria-hidden /></span>
+                  <div><p className="text-[22px] font-semibold tracking-[-0.02em] tabular-nums">{t.n.toLocaleString()}</p><p className="text-xs text-muted">{t.label}</p></div>
+                </Link>
+              </motion.div>
             ))}
-          </section>
+          </motion.section>
 
           <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
             <section aria-labelledby="recent-h">

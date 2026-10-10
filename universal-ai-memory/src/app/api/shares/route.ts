@@ -23,7 +23,7 @@ export const GET = route({ query }, async ({ supabase, user, query }) => {
   const userIds = [...new Set(rows.map((r) => (query.direction === "sent" ? r.recipient_id : r.owner_id) as string))];
   const [{ data: files }, { data: profiles }] = await Promise.all([
     fileIds.length ? admin.from("files").select("id,display_name,category,mime_type,size_bytes,deleted_at").in("id", fileIds) : { data: [] },
-    userIds.length ? admin.from("profiles").select("id,username,display_name").in("id", userIds) : { data: [] },
+    userIds.length ? admin.from("profiles").select("id,username,display_name,avatar_url").in("id", userIds) : { data: [] },
   ]);
   const F = new Map((files ?? []).map((f) => [f.id as string, f]));
   const U = new Map((profiles ?? []).map((p) => [p.id as string, p]));
@@ -37,7 +37,7 @@ export const GET = route({ query }, async ({ supabase, user, query }) => {
         id: r.id, status: expired && ["pending", "accepted"].includes(r.status as string) ? "expired" : r.status,
         canDownload: r.can_download, note: r.note, expiresAt: r.expires_at, createdAt: r.created_at, acceptedAt: r.accepted_at,
         file: f ? { id: f.id, name: f.display_name, category: f.category, mime: f.mime_type, size: f.size_bytes, trashed: Boolean(f.deleted_at) } : null,
-        otherParty: other ? { username: other.username, displayName: other.display_name } : null,
+        otherParty: other ? { id: other.id, username: other.username, displayName: other.display_name, avatar: other.avatar_url ?? null } : null,
       };
     }),
   };

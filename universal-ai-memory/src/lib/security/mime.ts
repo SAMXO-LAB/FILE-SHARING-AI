@@ -4,7 +4,7 @@
  */
 export interface SniffResult {
   mime: string | null;
-  /** True for native executables, which we refuse. */
+  /** True for native executables (stored as opaque files, never parsed or previewed). */
   executable: boolean;
   /** True when the leading bytes look like (mostly) valid text. */
   text: boolean;
@@ -86,22 +86,40 @@ export function sniff(b: Uint8Array): SniffResult {
   return none;
 }
 
+/** Types the sniffer above recognises by signature: if one of these is claimed, the bytes must agree. */
+const SIGNED = new Set([
+  "application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp", "image/tiff", "image/heic", "image/avif",
+  "audio/wav", "audio/mpeg", "audio/ogg", "audio/flac", "audio/mp4", "video/mp4", "video/quicktime", "video/webm", "video/x-matroska",
+  "video/x-msvideo", "application/zip", "application/gzip", "application/x-tar",
+]);
+
+/** Formats that are ZIP containers under the hood (Office, OpenDocument, EPUB, iWork, app packages…). */
+function isZipFamily(m: string): boolean {
+  return m.includes("zip") || m.includes("officedocument") || m.includes("opendocument") || m.includes("ms-word.document.macroenabled") ||
+    m.includes("ms-excel.sheet.macroenabled") || m.includes("ms-powerpoint.presentation.macroenabled") || m.startsWith("application/vnd.apple.") ||
+    m === "application/vnd.android.package-archive" || m === "application/java-archive" || m === "model/3mf" || m === "application/octet-stream";
+}
+
 /** Whether a declared/extension type is plausible given the sniffed content. */
 export function mimeCompatible(expected: string, sniffed: SniffResult): boolean {
-  if (!sniffed.mime) return !expected.startsWith("image/") && !expected.startsWith("audio/") && !expected.startsWith("video/") && expected !== "application/pdf" && !expected.includes("zip") && !expected.includes("officedocument");
+  if (!sniffed.mime) return !SIGNED.has(expected) && !expected.includes("officedocument") && !expected.includes("opendocument") && expected !== "application/epub+zip";
   if (sniffed.mime === expected) return true;
   if (sniffed.text) {
-    // Any text-ish expected type is fine for text content (json, csv, code, md…).
-    return expected.startsWith("text/") || expected.includes("json") || expected.includes("xml") || expected.includes("sql") || expected.includes("yaml");
+    // Any text-ish expected type is fine for text content (json, csv, code, md, rtf, email, calendar…).
+    return expected.startsWith("text/") || expected.includes("json") || expected.includes("xml") || expected.includes("sql") || expected.includes("yaml") ||
+      expected.includes("rtf") || expected === "message/rfc822" || expected === "application/postscript" || expected === "application/x-tex" ||
+      expected.startsWith("model/") || expected === "application/geo+json" || expected === "application/octet-stream";
   }
-  // Office files are zips.
-  if (sniffed.mime === "application/zip" && (expected.includes("officedocument") || expected.includes("zip") || expected === "application/x-tar")) return true;
+  if (sniffed.mime === "application/zip" && (isZipFamily(expected) || expected === "application/x-tar")) return true;
+  // Camera RAW formats (DNG, CR2, NEF, ARW) are TIFF containers; Illustrator files are PDFs.
+  if (sniffed.mime === "image/tiff" && expected.startsWith("image/")) return true;
+  if (sniffed.mime === "application/pdf" && (expected === "application/postscript" || expected === "application/illustrator")) return true;
   if (sniffed.mime === "video/webm" && expected === "video/x-matroska") return true;
-  if (sniffed.mime === "video/mp4" && expected === "video/quicktime") return true;
-  if (sniffed.mime === "audio/mp4" && expected === "audio/aac") return true;
-  if (sniffed.mime === "audio/ogg" && expected === "audio/ogg") return true;
-  if (sniffed.mime === "audio/mp4" && expected === "video/mp4") return true;
-  if (sniffed.mime === "video/mp4" && expected === "audio/mp4") return true;
-  if (sniffed.mime === "application/gzip" && expected.includes("gzip")) return true;
+  if (sniffed.mime === "video/mp4" && (expected === "video/quicktime" || expected.startsWith("video/") || expected === "audio/mp4")) return true;
+  if (sniffed.mime === "audio/mp4" && (expected === "audio/aac" || expected === "video/mp4" || expected.startsWith("audio/"))) return true;
+  if (sniffed.mime === "image/heic" && expected.startsWith("image/hei")) return true;
+  if (sniffed.mime === "audio/ogg" && (expected.startsWith("audio/") || expected === "video/ogg")) return true;
+  if (sniffed.mime === "audio/mpeg" && expected.startsWith("audio/")) return true;
+  if (sniffed.mime === "application/gzip" && (expected.includes("gzip") || expected.includes("tar"))) return true;
   return false;
 }

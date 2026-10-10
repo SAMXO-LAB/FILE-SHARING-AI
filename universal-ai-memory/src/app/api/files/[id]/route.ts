@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { errors, route } from "@/lib/api";
-import { isBlockedExtension, sanitizeFileName } from "@/lib/files/types";
+import { sanitizeFileName } from "@/lib/files/types";
 import { purgeFiles } from "@/lib/processing/pipeline";
 import { adminOrThrow, audit } from "@/lib/server/context";
 import { cleanTags, ownFile } from "@/lib/server/files";
@@ -57,9 +57,7 @@ export const PATCH = route<z.infer<typeof patch>, undefined, P>({ body: patch },
   const file = await ownFile(supabase, user.id, id);
   const update: Record<string, unknown> = {};
   if (body.name !== undefined) {
-    const name = sanitizeFileName(body.name);
-    if (isBlockedExtension(name)) throw errors.badRequest("That file name isn't allowed.");
-    update.display_name = name;
+    update.display_name = sanitizeFileName(body.name);
   }
   if (body.folderId !== undefined) update.folder_id = body.folderId;
   if (body.tags !== undefined) update.tags = cleanTags(body.tags);

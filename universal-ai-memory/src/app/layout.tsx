@@ -3,6 +3,9 @@ import { headers } from "next/headers";
 import type { CSSProperties } from "react";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
+import "@fontsource-variable/sora/index.css";
+import "@fontsource/ibm-plex-mono/latin-500.css";
+import { MotionProvider } from "@/components/motion-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { getThemeState } from "@/lib/server/theme";
 import { themeStylesheet } from "@/lib/themes";
@@ -10,7 +13,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Share Files AI", template: "%s · Share Files AI" },
-  description: "Ask anything about your files, chats, links and notes, and get answers with sources.",
+  description: "Send smarter. Share securely. Store and share any file, then ask AI about your files, chats, links and notes, with sources.",
   robots: { index: false, follow: false },
 };
 
@@ -36,7 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <div className="app-bg" aria-hidden />
-        {children}
+        <MotionProvider>{children}</MotionProvider>
         <Toaster />
       </body>
     </html>

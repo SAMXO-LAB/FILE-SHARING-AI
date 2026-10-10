@@ -56,7 +56,7 @@ export function LinksView() {
         : list.error ? <ErrorState message={list.error} onRetry={reload} />
         : links.length === 0 ? <EmptyState icon={Link2} title={dq || starred ? "No links match" : "No saved links yet"} action={!dq && !starred ? <Button onClick={() => openAdd("link")}><Plus className="h-4 w-4" aria-hidden />Save a link</Button> : undefined}>{dq || starred ? "Try different words or clear the filter." : "Paste a web address, or drag a link from your browser anywhere onto this page."}</EmptyState>
         : (
-          <ul className="space-y-3">
+          <ul className="stagger-in space-y-3">
             {links.map((l) => (
               <li key={l.id} id={`link-${l.id}`} className={cn("glass p-4", l.id === openId && "ring-2 ring-accent")}>
                 <div className="flex items-start gap-3">

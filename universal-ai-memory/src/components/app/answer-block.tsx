@@ -107,12 +107,13 @@ export function AssistantBlock({ m, onAsk, onRefine, onRetry }: { m: ChatMessage
   const chips = s.interpretation?.chips ?? [];
 
   return (
-    <div className="space-y-7 animate-rise">
-      <article className="card overflow-hidden !rounded-[calc(var(--radius)*1.2)] shadow-[var(--shadow-sm)]">
+    <div className="answer-reveal space-y-7">
+      <article className="card relative overflow-hidden !rounded-[calc(var(--radius)*1.2)] shadow-[var(--shadow-sm)]">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#2F8CFF] to-transparent opacity-60" />
         <div className="px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
           {mode && (
             <div className="mb-3.5 flex items-center gap-2">
-              <span className="grid h-6 w-6 place-items-center rounded-lg bg-accent-soft text-accent"><Sparkles className="h-3.5 w-3.5" aria-hidden /></span>
+              <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-[#2F8CFF] to-[#1E4FD8] text-white shadow-[0_4px_10px_-4px_#2F8CFF]"><Sparkles className="h-3.5 w-3.5" aria-hidden /></span>
               <span className={cn("text-[12.5px] font-medium", mode.tone === "warn" ? "text-warn" : "text-muted")}>{mode.label}</span>
             </div>
           )}

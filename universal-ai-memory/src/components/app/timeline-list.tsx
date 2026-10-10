@@ -35,7 +35,7 @@ export function TimelineList({ items, grouped = true }: { items: TimelineItem[];
       {groups.map((g) => (
         <section key={g.label || "all"}>
           {g.label && <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{g.label}</h3>}
-          <ul className="space-y-1.5">
+          <ul className="stagger-in space-y-1.5">
             {g.items.map((it) => (
               <li key={`${it.type}:${it.id}`}>
                 <Link href={itemHref(it)} className="panel flex items-center gap-3 p-3 transition-colors hover:bg-[rgb(var(--line)/0.08)]">

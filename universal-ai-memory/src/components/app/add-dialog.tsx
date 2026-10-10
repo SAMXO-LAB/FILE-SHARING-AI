@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from "react
 import { Camera, FileUp, FolderUp, ImageIcon, Link2, MessageSquareText, NotebookPen, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DropZone } from "@/components/ui/drop-zone";
 import { FieldError, Hint, Input, Label, Textarea } from "@/components/ui/input";
 import { Dialog, DialogContent, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/overlay";
 import { Switch } from "@/components/ui/overlay";
@@ -24,35 +25,36 @@ export const useAddToMemory = () => {
 
 function FilesTab({ folderId, onAdded }: { folderId: string | null; onAdded: () => void }) {
   const { add } = useUploads();
-  const picks = (files: FileList | null) => {
+  const picks = (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
     add(Array.from(files), { folderId });
     onAdded();
   };
   const input = "sr-only";
+  const tile = "glass flex cursor-pointer items-center gap-3 p-3.5 transition-[transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-accent/40 focus-within:ring-2 focus-within:ring-accent/25";
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted">PDFs, documents, spreadsheets, images, audio, video, archives and more. You can also drag files anywhere on this page.</p>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="glass flex cursor-pointer items-center gap-3 p-4  transition-transform">
-          <FileUp className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Choose files</span>
-          <input type="file" multiple className={input} onChange={(e) => { picks(e.target.files); e.target.value = ""; }} />
-        </label>
-        <label className="glass flex cursor-pointer items-center gap-3 p-4  transition-transform">
-          <FolderUp className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Choose a folder</span>
+    <div className="space-y-3.5">
+      <DropZone
+        onFiles={picks}
+        dropLabel="add them to memory"
+        hint={<>Any file type: documents, photos, videos, audio, archives, code, design files and more.</>}
+      />
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        <label className={tile}>
+          <FolderUp className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Upload a whole folder</span>
           {/* @ts-expect-error webkitdirectory is non-standard but widely supported */}
           <input type="file" multiple webkitdirectory="" className={input} onChange={(e) => { picks(e.target.files); e.target.value = ""; }} />
         </label>
-        <label className="glass flex cursor-pointer items-center gap-3 p-4  transition-transform sm:hidden">
+        <label className={tile + " sm:hidden"}>
           <ImageIcon className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Photos and videos</span>
           <input type="file" multiple accept="image/*,video/*" className={input} onChange={(e) => { picks(e.target.files); e.target.value = ""; }} />
         </label>
-        <label className="glass flex cursor-pointer items-center gap-3 p-4  transition-transform sm:hidden">
+        <label className={tile}>
           <Camera className="h-5 w-5 text-accent" aria-hidden /><span className="text-sm font-medium">Take a photo</span>
           <input type="file" accept="image/*" capture="environment" className={input} onChange={(e) => { picks(e.target.files); e.target.value = ""; }} />
         </label>
       </div>
-      <Hint>Executable programs aren't accepted. Large files upload in pieces and resume if your connection drops.</Hint>
+      <Hint>Every file type is welcome. Programs and macro files are stored safely but never opened by the server. Large files upload in pieces and resume if your connection drops.</Hint>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { htmlToText } from "./html";
 import { decodeEntities, decodeText, normalizeWhitespace } from "./text";
 import type { TextPage } from "./chunk";
 
-export type ExtractKind = "pdf" | "docx" | "xlsx" | "pptx" | "text" | "csv" | "json" | "xml" | "html";
+export type ExtractKind = "pdf" | "docx" | "xlsx" | "pptx" | "text" | "csv" | "json" | "xml" | "html" | "odf" | "epub" | "rtf";
 
 export interface Extraction {
   pages: TextPage[];
@@ -159,6 +159,84 @@ function extractXlsx(data: Uint8Array): Extraction {
   return { pages, pageCount: pages.length, notes: ["Each worksheet is indexed as a page."] };
 }
 
+/** OpenDocument (.odt/.ods/.odp): all text lives in content.xml; paragraphs/headings/cells become lines. */
+function extractOdf(data: Uint8Array): Extraction {
+  const files = readZipEntries(data, (n) => n === "content.xml");
+  const xml = files["content.xml"];
+  if (!xml) throw new ExtractionError("This doesn't look like an OpenDocument file (no content.xml).");
+  const text = decodeText(xml)
+    .replace(/<text:(tab|s)\b[^>]*\/>/g, " ")
+    .replace(/<text:line-break\s*\/>/g, "\n")
+    .replace(/<\/(text:p|text:h|table:table-row)>/g, "\n")
+    .replace(/<\/table:table-cell>/g, "\t")
+    .replace(/<[^>]+>/g, "");
+  return { pages: [{ page: null, text: normalizeWhitespace(decodeEntities(text)) }], pageCount: null, notes: [] };
+}
+
+/** EPUB: chapters are XHTML files; read them in spine order when the OPF is present. */
+function extractEpub(data: Uint8Array): Extraction {
+  const files = readZipEntries(data, (n) => /\.(x?html?|opf)$/i.test(n));
+  const names = Object.keys(files);
+  const opfName = names.find((n) => n.toLowerCase().endsWith(".opf"));
+  let order: string[] = names.filter((n) => /\.x?html?$/i.test(n)).sort();
+  if (opfName) {
+    const opf = decodeText(files[opfName]!);
+    const base = opfName.includes("/") ? opfName.slice(0, opfName.lastIndexOf("/") + 1) : "";
+    const hrefs = new Map<string, string>();
+    for (const m of opf.matchAll(/<item\b[^>]*>/g)) {
+      const id = /\bid="([^"]+)"/.exec(m[0])?.[1];
+      const href = /\bhref="([^"]+)"/.exec(m[0])?.[1];
+      if (id && href) hrefs.set(id, base + decodeURIComponent(href));
+    }
+    const spine = [...opf.matchAll(/<itemref\b[^>]*idref="([^"]+)"/g)].map((m) => hrefs.get(m[1]!)).filter((h): h is string => Boolean(h && files[h]));
+    if (spine.length) order = spine;
+  }
+  if (order.length === 0) throw new ExtractionError("No readable chapters were found in this e-book.");
+  const pages: TextPage[] = order.map((n, i) => ({ page: i + 1, text: htmlToText(decodeText(files[n]!)) })).filter((p) => p.text.trim());
+  return { pages, pageCount: pages.length, notes: pages.length ? ["Each chapter is indexed as a page."] : [] };
+}
+
+/** RTF: drop control words, groups like font tables, and decode \'hh / \uN escapes. */
+export function rtfToText(src: string): string {
+  if (!src.startsWith("{\\rtf")) throw new ExtractionError("This doesn't look like a valid RTF document.");
+  const SKIP = new Set(["fonttbl", "colortbl", "stylesheet", "info", "pict", "header", "footer", "themedata", "colorschememapping", "latentstyles", "datastore", "xmlnstbl", "listtable", "listoverridetable", "rsidtbl", "generator"]);
+  let out = "";
+  const stack: boolean[] = [];
+  let skip = false;
+  let i = 0;
+  let ucSkip = 0;
+  while (i < src.length) {
+    const ch = src[i]!;
+    if (ch === "{") { stack.push(skip); i++; continue; }
+    if (ch === "}") { skip = stack.pop() ?? false; i++; continue; }
+    if (ch === "\\") {
+      const next = src[i + 1] ?? "";
+      if (next === "\\" || next === "{" || next === "}") { if (!skip) out += next; i += 2; continue; }
+      if (next === "*") { skip = true; i += 2; continue; }
+      if (next === "'") {
+        if (!skip) out += String.fromCharCode(parseInt(src.slice(i + 2, i + 4), 16) || 32);
+        i += 4; continue;
+      }
+      const m = /^\\([a-zA-Z]+)(-?\d+)? ?/.exec(src.slice(i, i + 40));
+      if (!m) { i += 2; continue; }
+      const word = m[1]!;
+      const arg = m[2];
+      i += m[0].length;
+      if (SKIP.has(word)) { skip = true; continue; }
+      if (skip) continue;
+      if (word === "par" || word === "line" || word === "row") out += "\n";
+      else if (word === "tab" || word === "cell") out += "\t";
+      else if (word === "u" && arg) { out += String.fromCharCode((Number(arg) + 65536) % 65536); ucSkip = 1; }
+      continue;
+    }
+    if (ch === "\r" || ch === "\n") { i++; continue; }
+    if (ucSkip > 0) { ucSkip--; i++; continue; }
+    if (!skip) out += ch;
+    i++;
+  }
+  return normalizeWhitespace(out);
+}
+
 async function extractPdf(data: Uint8Array): Promise<Extraction> {
   const { getDocumentProxy, extractText } = await import("unpdf");
   let pdf;
@@ -211,6 +289,9 @@ export async function extractText(kind: ExtractKind, data: Uint8Array, maxChars:
     case "docx": result = extractDocx(data); break;
     case "pptx": result = extractPptx(data); break;
     case "xlsx": result = extractXlsx(data); break;
+    case "odf": result = extractOdf(data); break;
+    case "epub": result = extractEpub(data); break;
+    case "rtf": result = { pages: [{ page: null, text: rtfToText(decodeText(data)) }], pageCount: null, notes: [] }; break;
     case "html": result = { pages: [{ page: null, text: htmlToText(decodeText(data)) }], pageCount: null, notes: [] }; break;
     case "xml": result = { pages: [{ page: null, text: normalizeWhitespace(decodeEntities(decodeText(data).replace(/<[^>]+>/g, " "))) }], pageCount: null, notes: [] }; break;
     case "json": result = { pages: [{ page: null, text: normalizeWhitespace(extractJson(decodeText(data))) }], pageCount: null, notes: [] }; break;

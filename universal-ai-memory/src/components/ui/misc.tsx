@@ -29,8 +29,8 @@ export function Badge({ className, tone, ...props }: React.HTMLAttributes<HTMLSp
 
 export function EmptyState({ icon: Icon, title, children, action, className }: { icon?: LucideIcon; title: string; children?: React.ReactNode; action?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("card flex flex-col items-center gap-3 border-dashed px-6 py-14 text-center shadow-none", className)}>
-      {Icon && <div className="mb-1 grid h-12 w-12 place-items-center rounded-2xl border border-accent/15 bg-accent-soft text-accent"><Icon className="h-[22px] w-[22px]" aria-hidden /></div>}
+    <div className={cn("card animate-rise flex flex-col items-center gap-3 border-dashed px-6 py-14 text-center shadow-none", className)}>
+      {Icon && <div className="empty-icon mb-1 grid h-12 w-12 place-items-center rounded-2xl border border-accent/15 bg-accent-soft text-accent"><Icon className="h-[22px] w-[22px]" aria-hidden /></div>}
       <h3 className="text-[15px] font-semibold tracking-tight">{title}</h3>
       {children && <p className="max-w-md text-sm leading-relaxed text-muted">{children}</p>}
       {action}
@@ -49,7 +49,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
 
 export function PageHeader({ title, description, actions }: { title: string; description?: React.ReactNode; actions?: React.ReactNode }) {
   return (
-    <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+    <div className="page-header mb-7 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] sm:text-[28px]">{title}</h1>
         {description && <p className="mt-1.5 max-w-2xl text-[14.5px] leading-relaxed text-muted">{description}</p>}

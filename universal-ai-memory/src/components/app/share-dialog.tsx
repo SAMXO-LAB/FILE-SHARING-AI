@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Clock, ShieldAlert, Trash2, User } from "lucide-react";
+import { Clock, ShieldAlert, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FieldError, Hint, Input, Label, Textarea } from "@/components/ui/input";
 import { Dialog, DialogContent, Select, Switch } from "@/components/ui/overlay";
@@ -9,7 +10,7 @@ import { Badge, Skeleton } from "@/components/ui/misc";
 import { api, errorMessage, useFetch } from "@/lib/client/api";
 import { formatDate } from "@/lib/utils";
 
-interface ShareRow { id: string; status: string; canDownload: boolean; expiresAt: string | null; createdAt: string; otherParty: { username: string } | null }
+interface ShareRow { id: string; status: string; canDownload: boolean; expiresAt: string | null; createdAt: string; otherParty: { id?: string; username: string; avatar?: string | null } | null }
 
 /** Private, explicit sharing with another account: recipient must accept, access expires, and the owner can revoke. */
 export function ShareDialog({ fileId, fileName, open, onOpenChange }: { fileId: string; fileName: string; open: boolean; onOpenChange: (o: boolean) => void }) {
@@ -58,7 +59,7 @@ export function ShareDialog({ fileId, fileName, open, onOpenChange }: { fileId: 
             <ul className="space-y-2">
               {active.map((s) => (
                 <li key={s.id} className="panel flex items-center gap-3 p-3 text-sm">
-                  <User className="h-4 w-4 text-muted" aria-hidden />
+                  <Avatar value={s.otherParty?.avatar} seed={s.otherParty?.id ?? s.otherParty?.username ?? s.id} size={32} />
                   <div className="min-w-0 flex-1"><p className="truncate font-medium">@{s.otherParty?.username ?? "unknown"}</p><p className="flex items-center gap-1 text-xs text-muted"><Clock className="h-3 w-3" aria-hidden />{s.expiresAt ? `until ${formatDate(s.expiresAt)}` : "no expiry"}{s.canDownload ? " · can download" : " · view only"}</p></div>
                   <Badge tone={s.status === "accepted" ? "ok" : "warn"}>{s.status === "accepted" ? "Accepted" : "Waiting"}</Badge>
                   <Button size="icon-sm" variant="danger-ghost" aria-label={`Revoke access for ${s.otherParty?.username}`} onClick={() => void revoke(s.id)}><Trash2 className="h-4 w-4" /></Button>

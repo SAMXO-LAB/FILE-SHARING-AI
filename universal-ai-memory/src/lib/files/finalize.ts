@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { enqueueJob } from "@/lib/processing/jobs";
-import { isBlockedExtension, typeFromName, categoryFromMime } from "@/lib/files/types";
+import { isProgramFile, PROGRAM_FILE_NOTE, typeFromName, categoryFromMime } from "@/lib/files/types";
 import { mimeCompatible, sniff } from "@/lib/security/mime";
 import { objectSize, readHead, removeObjects } from "@/lib/storage/objects";
 import type { FileRow } from "@/lib/types";
@@ -19,7 +19,8 @@ async function reject(admin: SupabaseClient, file: FileRow, code: Exclude<Finali
 /**
  * Server-side verification that runs after bytes have landed in storage (client upload or server import):
  *  - the object really exists and its REAL size is checked against the per-file limit and the quota
- *  - the content is sniffed; executables are refused; the browser-declared type is never trusted
+ *  - the content is sniffed; the browser-declared type is never trusted. Programs and macro files are
+ *    accepted but stored as opaque binaries (never parsed, always downloaded as attachments) with a warning
  *  - the file is queued for processing
  */
 export async function finalizeUpload(admin: SupabaseClient, file: FileRow, head?: Uint8Array): Promise<FinalizeResult> {
@@ -40,15 +41,8 @@ export async function finalizeUpload(admin: SupabaseClient, file: FileRow, head?
     }
   }
 
-  if (isBlockedExtension(file.display_name)) {
-    return reject(admin, file, "blocked", "Executable and script-launcher files aren't accepted.");
-  }
-
   const bytes = head ?? (await readHead(admin, file.storage_key, 4096));
   const sniffed = sniff(bytes);
-  if (sniffed.executable) {
-    return reject(admin, file, "executable", "This file looks like a program, which isn't accepted.");
-  }
 
   if (file.purpose === "import_source") {
     // Chat exports are parsed by the importer, never indexed as documents.
@@ -61,6 +55,17 @@ export async function finalizeUpload(admin: SupabaseClient, file: FileRow, head?
       .eq("id", file.id).eq("owner_id", file.owner_id).select("*").single();
     if (srcErr || !src) throw new Error(`Could not finish the upload (${srcErr?.message ?? "unknown"}).`);
     return { ok: true, file: src as FileRow };
+  }
+
+  if (isProgramFile(file.display_name) || sniffed.executable) {
+    // Stored as-is: the pipeline only indexes the name/metadata, never the contents.
+    const { data: prog, error: progErr } = await admin
+      .from("files")
+      .update({ size_bytes: info.size, mime_type: "application/octet-stream", category: "other", status: "queued", status_detail: PROGRAM_FILE_NOTE })
+      .eq("id", file.id).eq("owner_id", file.owner_id).select("*").single();
+    if (progErr || !prog) throw new Error(`Could not finish the upload (${progErr?.message ?? "unknown"}).`);
+    await enqueueJob(admin, file.owner_id, "process_file", { fileId: file.id }, { dedupeKey: `file:${file.id}` });
+    return { ok: true, file: prog as FileRow };
   }
 
   const expected = typeFromName(file.display_name, file.declared_mime);

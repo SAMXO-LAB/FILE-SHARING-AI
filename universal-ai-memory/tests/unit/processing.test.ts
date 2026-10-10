@@ -125,6 +125,31 @@ describe("extractors", () => {
     expect(extractKindFor("text/x-python", "a.py")).toBe("text");
     expect(extractKindFor("application/octet-stream", "a.bin")).toBeNull();
     expect(extractKindFor("image/png", "a.png")).toBeNull();
+    expect(extractKindFor("application/vnd.oasis.opendocument.text", "a.odt")).toBe("odf");
+    expect(extractKindFor("application/epub+zip", "b.epub")).toBe("epub");
+    expect(extractKindFor("application/rtf", "c.rtf")).toBe("rtf");
+    expect(extractKindFor("text/plain", "run.bat")).toBeNull(); // programs are never parsed
+  });
+
+  it("reads OpenDocument, EPUB and RTF", async () => {
+    const odt = zipSync({ "content.xml": u8('<office:document-content><office:body><text:h>Trip plan</text:h><text:p>Budget is 18000<text:s/>per person</text:p></office:body></office:document-content>') });
+    const o = await extractText("odf", odt, MAX);
+    expect(o.pages[0]!.text).toContain("Trip plan");
+    expect(o.pages[0]!.text).toContain("Budget is 18000 per person");
+
+    const epub = zipSync({
+      "OEBPS/content.opf": u8('<package><manifest><item id="c2" href="ch2.xhtml"/><item id="c1" href="ch1.xhtml"/></manifest><spine><itemref idref="c1"/><itemref idref="c2"/></spine></package>'),
+      "OEBPS/ch1.xhtml": u8("<html><body><h1>Chapter one</h1><p>It began.</p></body></html>"),
+      "OEBPS/ch2.xhtml": u8("<html><body><h1>Chapter two</h1><p>It ended.</p></body></html>"),
+    });
+    const e = await extractText("epub", epub, MAX);
+    expect(e.pages.map((p) => p.page)).toEqual([1, 2]);
+    expect(e.pages[0]!.text).toContain("Chapter one");
+    expect(e.pages[1]!.text).toContain("It ended.");
+
+    const r = await extractText("rtf", u8("{\\rtf1\\ansi{\\fonttbl{\\f0 Arial;}}\\f0 Hello \\b world\\b0\\par Caf\\'e9 \\u8364? ok}"), MAX);
+    expect(r.pages[0]!.text).toBe("Hello world\nCafé € ok");
+    await expect(extractText("rtf", u8("not rtf"), MAX)).rejects.toThrow(/RTF/);
   });
 });
 

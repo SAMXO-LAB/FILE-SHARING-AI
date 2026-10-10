@@ -4,7 +4,7 @@ import { assertSafeUrlShape, guardedLookup, isBlockedAddress, normalizeUrl, Unsa
 import { looksLikeText, mimeCompatible, sniff } from "@/lib/security/mime";
 import { isSameOrigin } from "@/lib/security/origin";
 import { _resetMemoryRateLimit, memoryRateLimit } from "@/lib/security/rate-limit";
-import { sanitizeFileName, isBlockedExtension, previewKind, typeFromName } from "@/lib/files/types";
+import { sanitizeFileName, isProgramFile, previewKind, typeFromName } from "@/lib/files/types";
 import { fence, DOCUMENT_GUARD } from "@/lib/ai/prompts";
 
 describe("SSRF protection", () => {
@@ -103,9 +103,18 @@ describe("file helpers", () => {
     expect(sanitizeFileName("x".repeat(400)).length).toBe(255);
     expect(sanitizeFileName("a/b\\c")).not.toMatch(/[\\/]/);
   });
-  it("blocks executables by extension", () => {
-    for (const n of ["setup.exe", "run.BAT", "x.jar", "a.ps1", "tool.msi"]) expect(isBlockedExtension(n)).toBe(true);
-    for (const n of ["notes.txt", "paper.pdf", "script.py"]) expect(isBlockedExtension(n)).toBe(false);
+  it("flags programs and macro files (stored, never parsed)", () => {
+    for (const n of ["setup.exe", "run.BAT", "x.jar", "a.ps1", "tool.msi", "app.apk", "budget.xlsm"]) expect(isProgramFile(n)).toBe(true);
+    for (const n of ["notes.txt", "paper.pdf", "script.py", "book.epub", "photo.psd"]) expect(isProgramFile(n)).toBe(false);
+  });
+  it("knows many file types", () => {
+    expect(typeFromName("Report.odt").extract).toBe("odf");
+    expect(typeFromName("novel.epub").extract).toBe("epub");
+    expect(typeFromName("letter.rtf").extract).toBe("rtf");
+    expect(typeFromName("design.psd").category).toBe("image");
+    expect(typeFromName("song.aiff").category).toBe("audio");
+    expect(typeFromName("backup.7z").category).toBe("archive");
+    expect(typeFromName("mystery.xyz123").category).toBe("other");
   });
   it("only previews safe types", () => {
     expect(previewKind("application/pdf", "document")).toBe("pdf");

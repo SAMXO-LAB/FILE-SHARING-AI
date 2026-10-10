@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { AlertCircle, CheckCircle2, ChevronDown, FileUp, Loader2, MessageCircle, Send } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronDown, FileCheck2, FileUp, Loader2, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DropZone } from "@/components/ui/drop-zone";
 import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/overlay";
 import { api, errorMessage } from "@/lib/client/api";
@@ -104,11 +105,18 @@ export function ImportWizard({ onDone, initialKind }: Props) {
 
       <div>
         <Label htmlFor="export-file">Export file</Label>
-        <label htmlFor="export-file" className={cn("glass flex cursor-pointer items-center gap-3 p-3 text-sm", phase !== "idle" && "pointer-events-none opacity-70")}>
-          <FileUp className="h-5 w-5 text-accent" aria-hidden />
-          <span className="truncate">{file ? file.name : `Choose a ${g.accept.replaceAll(",", " or ")} file`}</span>
-        </label>
-        <input id="export-file" type="file" accept={g.accept} className="sr-only" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(null); }} />
+        <DropZone
+          id="export-file"
+          compact
+          multiple={false}
+          accept={g.accept}
+          disabled={phase !== "idle"}
+          dropLabel="use this export"
+          icon={file ? FileCheck2 : FileUp}
+          title={file ? file.name : <>Drop your {g.accept.replaceAll(",", " or ")} export here, or <span className="text-accent">browse</span></>}
+          hint={file ? "Ready to import. Drop or choose another file to replace it." : "Drag it straight from your Downloads folder."}
+          onFiles={(f) => { setFile(f[0] ?? null); setError(null); }}
+        />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">

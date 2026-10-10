@@ -1,20 +1,86 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Download } from "lucide-react";
+import { motion } from "framer-motion";
+import { Check, Download, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/components/app/app-context";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FieldError, Hint, Input, Label, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/overlay";
 import { Dialog, DialogContent } from "@/components/ui/overlay";
 import { api, errorMessage, useFetch } from "@/lib/client/api";
-import { formatDate, formatDateTime } from "@/lib/utils";
+import { AVATARS, resolveAvatar } from "@/lib/avatars";
+import { cn, formatDate, formatDateTime } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/misc";
 import type { Profile } from "@/lib/types";
 import { Section } from "./parts";
 
 const COOLDOWN_DAYS = 14;
+
+function AvatarPicker() {
+  const { profile, setProfile } = useApp();
+  const [saving, setSaving] = useState<string | null>(null);
+  const current = resolveAvatar(profile.avatar_url, profile.id);
+  const isDefault = !profile.avatar_url;
+  async function pick(value: string | null) {
+    const before = profile;
+    setSaving(value ?? "default");
+    setProfile({ ...profile, avatar_url: value }); // optimistic
+    try {
+      const r = await api<{ profile: Profile }>("/api/profile", { method: "PATCH", body: { avatar_url: value } });
+      setProfile(r.profile);
+      toast.success(value ? "Avatar updated" : "Back to your default avatar");
+    } catch (e) {
+      setProfile(before);
+      toast.error(errorMessage(e));
+    } finally { setSaving(null); }
+  }
+  return (
+    <Section title="Profile picture" description="Pick an avatar. It appears in the sidebar and next to your name when you share files.">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+        <motion.div key={current.id} initial={{ scale: 0.7, rotate: -8, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 380, damping: 20 }} className="flex shrink-0 flex-col items-center gap-2">
+          <Avatar def={current} seed={profile.id} size={88} className="shadow-[var(--shadow-md)] ring-4 ring-accent/15" />
+          <span className="text-xs text-muted">{current.label}{isDefault ? " (default)" : ""}</span>
+        </motion.div>
+        <div className="min-w-0 flex-1">
+          <div role="radiogroup" aria-label="Avatar" className="grid grid-cols-4 gap-2.5 sm:grid-cols-6">
+            {AVATARS.map((a, i) => {
+              const selected = profile.avatar_url === `avatar:${a.id}` || (isDefault && current.id === a.id);
+              return (
+                <motion.button
+                  key={a.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={a.label}
+                  title={a.label}
+                  disabled={saving !== null}
+                  onClick={() => void pick(`avatar:${a.id}`)}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.025 }}
+                  whileHover={{ y: -3, scale: 1.06 }}
+                  whileTap={{ scale: 0.92 }}
+                  className={cn("focus-ring relative grid aspect-square place-items-center rounded-full p-0.5 transition-shadow", selected ? "ring-[2.5px] ring-accent ring-offset-2 ring-offset-[var(--card)]" : "hover:shadow-[var(--shadow-md)]")}
+                >
+                  <Avatar def={a} seed={a.id} size={56} className="h-full w-full" />
+                  {selected && (
+                    <motion.span layoutId="avatar-check" className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full bg-accent text-white shadow-[var(--shadow-sm)] ring-2 ring-[var(--card)]">
+                      <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
+                    </motion.span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+          {!isDefault && <Button variant="ghost" size="sm" className="mt-3" disabled={saving !== null} onClick={() => void pick(null)}><RotateCcw className="h-3.5 w-3.5" aria-hidden />Use my default avatar</Button>}
+        </div>
+      </div>
+    </Section>
+  );
+}
 
 function ProfileForm() {
   const { profile, setProfile, email } = useApp();
@@ -174,5 +240,5 @@ function Activity() {
 }
 
 export function AccountTab() {
-  return <div className="space-y-5"><ProfileForm /><UsernameForm /><PasswordForm /><Activity /><DangerZone /></div>;
+  return <div className="space-y-5"><AvatarPicker /><ProfileForm /><UsernameForm /><PasswordForm /><Activity /><DangerZone /></div>;
 }

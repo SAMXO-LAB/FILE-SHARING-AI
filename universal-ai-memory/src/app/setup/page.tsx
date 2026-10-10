@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CheckCircle2, Circle } from "lucide-react";
-import { Logo } from "@/components/app/auth-shell";
+import { Logo } from "@/components/brand/logo";
 import { capabilities } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Setup" };
@@ -19,7 +19,7 @@ export default function SetupPage() {
   ];
   return (
     <main className="mx-auto max-w-2xl px-4 py-12">
-      <Logo className="text-lg" />
+      <Logo size="md" tagline />
       <h1 className="mt-8 text-2xl font-semibold tracking-tight">Finish setting up</h1>
       <p className="mt-2 text-sm text-muted">This page shows which parts of the server are configured. It never displays secret values. Copy <code>.env.example</code> to <code>.env.local</code>, fill it in, and restart.</p>
       <ul className="mt-6 space-y-3">
